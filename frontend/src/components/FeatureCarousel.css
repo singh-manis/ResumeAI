@@ -1,0 +1,243 @@
+.carousel-container {
+    position: relative;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 0;
+    overflow: hidden;
+}
+
+.carousel-track {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    min-height: 400px;
+    position: relative;
+    perspective: 1000px;
+}
+
+.carousel-card {
+    background: rgba(255, 255, 255, 0.03);
+    /* Ultra-glass */
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 24px;
+    padding: 0;
+    /* Remove padding to allow image to fill */
+    width: 350px;
+    height: 450px;
+    /* Taller for image cards */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.carousel-card-inner {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2.5rem;
+    /* Default padding for non-image cards */
+}
+
+.carousel-card-inner.has-image {
+    padding: 0;
+    justify-content: flex-start;
+    align-items: flex-start;
+    text-align: left;
+}
+
+.card-image-wrapper {
+    width: 100%;
+    height: 60%;
+    position: relative;
+    overflow: hidden;
+}
+
+.card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.carousel-card:hover .card-image {
+    transform: scale(1.1);
+}
+
+.card-content {
+    padding: 1.5rem;
+    width: 100%;
+    z-index: 2;
+}
+
+.has-image .card-content {
+    height: 40%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+}
+
+/* Central Active Card Highlight */
+.carousel-card.card-position-1 {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 20px 50px -10px rgba(100, 100, 255, 0.2);
+}
+
+.card-icon-wrapper {
+    width: 70px;
+    height: 70px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Gradients for icons */
+.gradient-blue {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.1));
+    color: #60a5fa;
+}
+
+.gradient-purple {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(124, 58, 237, 0.1));
+    color: #a78bfa;
+}
+
+.gradient-orange {
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.2), rgba(234, 88, 12, 0.1));
+    color: #fb923c;
+}
+
+.gradient-green {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(22, 163, 74, 0.1));
+    color: #4ade80;
+}
+
+.gradient-yellow {
+    background: linear-gradient(135deg, rgba(234, 179, 8, 0.2), rgba(202, 138, 4, 0.1));
+    color: #facc15;
+}
+
+.gradient-pink {
+    background: linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(219, 39, 119, 0.1));
+    color: #f472b6;
+}
+
+.carousel-card h3 {
+    color: #fff;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.carousel-card p {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.card-glass-shine {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(105deg,
+            transparent 20%,
+            rgba(255, 255, 255, 0.05) 25%,
+            transparent 30%);
+    transform: skewX(-20deg) translateX(-150%);
+    transition: 0.5s;
+    pointer-events: none;
+}
+
+.carousel-card:hover .card-glass-shine {
+    transform: skewX(-20deg) translateX(150%);
+    transition: 0.7s;
+}
+
+.carousel-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.control-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.control-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+}
+
+.carousel-dots {
+    display: flex;
+    gap: 8px;
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.dot.active {
+    background: #fff;
+    width: 24px;
+    border-radius: 4px;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .carousel-track {
+        flex-direction: column;
+        min-height: auto;
+    }
+
+    .carousel-card {
+        width: 100%;
+        margin-bottom: 20px;
+        /* On mobile, we might just show one via JS logic, or stack them differently. 
+           But since JS logic handles visibility, we just ensure it fits width */
+    }
+
+    /* Important: Override the flex layout if logic shows defined items */
+    .carousel-track {
+        display: flex;
+        flex-direction: row;
+        /* Keep row but only show 1 item typically via JS logic adjustment */
+        overflow-x: hidden;
+    }
+}

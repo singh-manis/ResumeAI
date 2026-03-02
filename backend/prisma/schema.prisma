@@ -1,0 +1,426 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== ENUMS ====================
+
+enum AuthProvider {
+  LOCAL
+  GOOGLE
+  LINKEDIN
+}
+
+enum UserRole {
+  CANDIDATE
+  RECRUITER
+  ADMIN
+}
+
+enum WorkType {
+  REMOTE
+  ONSITE
+  HYBRID
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+}
+
+enum ApplicationStatus {
+  PENDING
+  REVIEWED
+  SHORTLISTED
+  INTERVIEW
+  OFFERED
+  REJECTED
+  WITHDRAWN
+}
+
+enum NotificationType {
+  MATCH
+  APPLICATION
+  MESSAGE
+  SYSTEM
+}
+
+enum ChatRole {
+  USER
+  ASSISTANT
+}
+
+// ==================== MODELS ====================
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String?
+  googleId      String?   @unique
+  authProvider  AuthProvider @default(LOCAL)
+  firstName     String
+  lastName      String
+  role          UserRole  @default(CANDIDATE)
+  avatar        String?
+  phone         String?
+  linkedinUrl   String?
+  location      String?
+  bio           String?
+  isVerified    Boolean   @default(false)
+  isActive      Boolean   @default(true)
+  lastLoginAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Gamification
+  xp               Int       @default(0)
+  level            Int       @default(1)
+  streak           Int       @default(0)
+  lastActivityDate DateTime  @default(now())
+
+  // Relations
+  resumes       Resume[]
+  jobs          Job[]           @relation("RecruiterJobs")
+  applications  Application[]
+  notifications Notification[]
+  chatMessages  ChatMessage[] // AI chat messages
+  analytics     Analytics[]
+  savedJobs     SavedJob[]
+  
+  // Real-time Chat Relations
+  messagesSent          Message[]      @relation("SentMessages")
+  conversationsAsCandidate Conversation[] @relation("CandidateConversations")
+  conversationsAsRecruiter Conversation[] @relation("RecruiterConversations")
+
+  @@map("users")
+}
+
+model Resume {
+  id               String   @id @default(uuid())
+  userId           String
+  title            String
+  originalFileName String
+  fileUrl          String
+  rawText          String   @db.Text
+  parsedData       Json?
+  embedding        Json?
+  atsScore         Float?
+  atsBreakdown     Json?
+  aiSuggestions    Json?
+  isActive         Boolean  @default(true)
+  version          Int      @default(1)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skills       ResumeSkill[]
+  experiences  Experience[]
+  educations   Education[]
+  applications Application[]
+  matches      Match[]
+
+  @@map("resumes")
+}
+
+model Experience {
+  id              String    @id @default(uuid())
+  resumeId        String
+  company         String
+  title           String
+  location        String?
+  startDate       DateTime
+  endDate         DateTime?
+  isCurrent       Boolean   @default(false)
+  description     String?   @db.Text
+  extractedSkills Json?
+
+  // Relations
+  resume Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+
+  @@map("experiences")
+}
+
+model Education {
+  id          String    @id @default(uuid())
+  resumeId    String
+  institution String
+  degree      String
+  field       String?
+  startDate   DateTime?
+  endDate     DateTime?
+  gpa         Float?
+
+  // Relations
+  resume Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+
+  @@map("educations")
+}
+
+model Job {
+  id               String         @id @default(uuid())
+  recruiterId      String
+  title            String
+  company          String
+  companyLogo      String?
+  description      String         @db.Text
+  requirements     String?        @db.Text
+  location         String?
+  workType         WorkType       @default(ONSITE)
+  employmentType   EmploymentType @default(FULL_TIME)
+  salaryMin        Int?
+  salaryMax        Int?
+  salaryCurrency   String         @default("USD")
+  embedding        Json?
+  isActive         Boolean        @default(true)
+  viewCount        Int            @default(0)
+  applicationCount Int            @default(0)
+  expiresAt        DateTime?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  // Relations
+  recruiter    User          @relation("RecruiterJobs", fields: [recruiterId], references: [id], onDelete: Cascade)
+  skills       JobSkill[]
+  applications Application[]
+  matches      Match[]
+  savedBy      SavedJob[]
+
+  @@map("jobs")
+}
+
+model Skill {
+  id          String  @id @default(uuid())
+  name        String  @unique
+  category    String?
+  description String?
+  demandScore Int     @default(0)
+
+  // Relations
+  resumeSkills ResumeSkill[]
+  jobSkills    JobSkill[]
+
+  @@map("skills")
+}
+
+model ResumeSkill {
+  resumeId          String
+  skillId           String
+  proficiencyLevel  Int    @default(3) // 1-5
+  yearsOfExperience Float?
+
+  // Relations
+  resume Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  skill  Skill  @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([resumeId, skillId])
+  @@map("resume_skills")
+}
+
+model JobSkill {
+  jobId           String
+  skillId         String
+  isRequired      Boolean @default(true)
+  importanceLevel Int     @default(3) // 1-5
+
+  // Relations
+  job   Job   @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  skill Skill @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([jobId, skillId])
+  @@map("job_skills")
+}
+
+model Application {
+  id            String            @id @default(uuid())
+  candidateId   String
+  jobId         String
+  resumeId      String
+  status        ApplicationStatus @default(PENDING)
+  coverLetter   String?           @db.Text
+  matchAnalysis Json?
+  matchScore    Float?
+  appliedAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  // Relations
+  candidate  User        @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  job        Job         @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  resume     Resume      @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  interviews Interview[]
+
+  @@unique([candidateId, jobId])
+  @@map("applications")
+}
+
+model Match {
+  id                    String   @id @default(uuid())
+  resumeId              String
+  jobId                 String
+  overallScore          Float
+  skillMatchScore       Float?
+  experienceMatchScore  Float?
+  educationMatchScore   Float?
+  skillGaps             Json?
+  strongMatches         Json?
+  aiExplanation         Json?
+  improvementSuggestions Json?
+  createdAt             DateTime @default(now())
+
+  // Relations
+  resume Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  job    Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([resumeId, jobId])
+  @@map("matches")
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String           @db.Text
+  metadata  Json?
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+model ChatMessage {
+  id        String   @id @default(uuid())
+  userId    String
+  role      ChatRole
+  content   String   @db.Text
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("chat_messages")
+}
+
+model Analytics {
+  id        String   @id @default(uuid())
+  userId    String?
+  eventType String
+  eventData Json?
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("analytics")
+}
+
+model SystemSettings {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+
+  @@map("system_settings")
+}
+
+// Saved jobs for candidates
+model SavedJob {
+  id        String   @id @default(uuid())
+  userId    String
+  jobId     String
+  notes     String?  @db.Text
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job  Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, jobId])
+  @@map("saved_jobs")
+}
+
+// Interview scheduling
+model Interview {
+  id              String          @id @default(uuid())
+  applicationId   String
+  scheduledAt     DateTime
+  duration        Int             @default(60) // minutes
+  type            InterviewType   @default(VIDEO)
+  location        String?
+  meetingLink     String?
+  notes           String?         @db.Text
+  status          InterviewStatus @default(SCHEDULED)
+  feedback        String?         @db.Text
+  rating          Int?            // 1-5
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  // Relations
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@map("interviews")
+}
+
+enum InterviewType {
+  PHONE
+  VIDEO
+  ONSITE
+  TECHNICAL
+  HR
+}
+
+enum InterviewStatus {
+  SCHEDULED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  RESCHEDULED
+  NO_SHOW
+}
+
+// ==================== REAL-TIME CHAT ====================
+
+model Conversation {
+  id              String    @id @default(uuid())
+  candidateId     String
+  recruiterId     String
+  jobId           String?   // Optional: link conversation to a specific job context
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  candidate       User      @relation("CandidateConversations", fields: [candidateId], references: [id], onDelete: Cascade)
+  recruiter       User      @relation("RecruiterConversations", fields: [recruiterId], references: [id], onDelete: Cascade)
+  // We won't strictly enforce relation to Job to allow general chat, but it's good to have it as a reference 
+  messages        Message[]
+
+  @@unique([candidateId, recruiterId]) // One unique conversation per candidate/recruiter pair
+  @@map("conversations")
+}
+
+model Message {
+  id              String       @id @default(uuid())
+  conversationId  String
+  senderId        String
+  content         String       @db.Text
+  isRead          Boolean      @default(false)
+  createdAt       DateTime     @default(now())
+
+  // Relations
+  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender          User         @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+}

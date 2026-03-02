@@ -1,0 +1,513 @@
+/* ==========================================
+   Candidates Page Styles
+   ========================================== */
+
+.candidates-page {
+    animation: fadeIn 0.3s ease;
+}
+
+/* Page Header */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--space-xl);
+}
+
+.page-header h1 {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: 1.5rem;
+    margin-bottom: var(--space-xs);
+}
+
+.page-header h1 svg {
+    color: var(--accent-primary);
+}
+
+.page-header p {
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.stats-mini {
+    display: flex;
+    gap: var(--space-lg);
+}
+
+.stats-mini .stat {
+    text-align: center;
+    padding: var(--space-sm) var(--space-lg);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+}
+
+.stats-mini .value {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--accent-primary);
+}
+
+.stats-mini .label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+/* Filters */
+.filters-bar {
+    display: flex;
+    gap: var(--space-md);
+    margin-bottom: var(--space-xl);
+    flex-wrap: wrap;
+}
+
+.search-box {
+    flex: 1;
+    min-width: 250px;
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-muted);
+}
+
+.search-box input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-size: 0.9375rem;
+}
+
+.search-box input:focus {
+    outline: none;
+}
+
+.filter-group select {
+    padding: var(--space-sm) var(--space-md);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    min-width: 150px;
+}
+
+/* Candidates Grid */
+.candidates-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--space-lg);
+}
+
+.loading-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--space-lg);
+}
+
+/* Candidate Card */
+.candidate-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    transition: all var(--transition-normal);
+}
+
+.candidate-card:hover {
+    border-color: var(--accent-primary);
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.candidate-card.loading {
+    height: 280px;
+    background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-hover) 50%, var(--bg-card) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--space-md);
+}
+
+.candidate-avatar {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent-gradient);
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.status-badge.pending {
+    background: var(--warning-light);
+    color: var(--warning);
+}
+
+.status-badge.reviewed {
+    background: var(--info-light);
+    color: var(--info);
+}
+
+.status-badge.shortlisted {
+    background: var(--success-light);
+    color: var(--success);
+}
+
+.status-badge.rejected {
+    background: var(--error-light);
+    color: var(--error);
+}
+
+.status-badge.hired {
+    background: rgba(99, 102, 241, 0.15);
+    color: var(--accent-primary);
+}
+
+/* Candidate Info */
+.candidate-info {
+    margin-bottom: var(--space-md);
+}
+
+.candidate-info h3 {
+    font-size: 1.125rem;
+    margin-bottom: var(--space-xs);
+}
+
+.applied-for {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-sm);
+}
+
+.applied-for strong {
+    color: var(--text-primary);
+}
+
+.contact-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.contact-info span {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+}
+
+/* Scores */
+.scores-row {
+    display: flex;
+    gap: var(--space-lg);
+    padding: var(--space-md);
+    background: var(--bg-hover);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-md);
+}
+
+.score-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+}
+
+.score-item svg {
+    color: var(--accent-primary);
+}
+
+.score-item strong {
+    color: var(--text-primary);
+}
+
+/* Card Actions */
+.card-actions {
+    display: flex;
+    gap: var(--space-sm);
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--border-color);
+}
+
+.action-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-sm) var(--space-md);
+    background: var(--bg-hover);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.action-btn:hover {
+    border-color: var(--text-muted);
+    color: var(--text-primary);
+}
+
+.action-btn.view:hover {
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+}
+
+.action-btn.shortlist:hover {
+    border-color: var(--success);
+    color: var(--success);
+    background: var(--success-light);
+}
+
+.action-btn.reject:hover {
+    border-color: var(--error);
+    color: var(--error);
+    background: var(--error-light);
+}
+
+/* Empty State */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.empty-state svg {
+    color: var(--accent-primary);
+    margin-bottom: var(--space-lg);
+}
+
+.empty-state h2 {
+    color: var(--text-primary);
+    margin-bottom: var(--space-sm);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        gap: var(--space-lg);
+    }
+
+    .stats-mini {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .filters-bar {
+        flex-direction: column;
+    }
+
+    .search-box {
+        min-width: 100%;
+    }
+
+    .filter-group select {
+        width: 100%;
+    }
+
+    .candidates-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ==========================================
+   View Toggle
+   ========================================== */
+.view-toggle {
+    display: flex;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 4px;
+    gap: 4px;
+}
+
+.toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-xs) var(--space-md);
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.toggle-btn:hover {
+    color: var(--text-primary);
+}
+
+.toggle-btn.active {
+    background: var(--bg-hover);
+    color: var(--accent-primary);
+    box-shadow: var(--shadow-sm);
+}
+
+/* ==========================================
+   Kanban Board Layout
+   ========================================== */
+.kanban-board {
+    display: flex;
+    gap: var(--space-md);
+    overflow-x: auto;
+    padding-bottom: var(--space-md);
+    min-height: 60vh;
+
+    /* Custom scrollbar for horizontal scrolling */
+    scrollbar-width: thin;
+    scrollbar-color: var(--bg-hover) transparent;
+}
+
+.kanban-board::-webkit-scrollbar {
+    height: 8px;
+}
+
+.kanban-board::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.kanban-board::-webkit-scrollbar-thumb {
+    background-color: var(--bg-hover);
+    border-radius: var(--radius-full);
+}
+
+.kanban-column {
+    flex: 0 0 320px;
+    display: flex;
+    flex-direction: column;
+    background: rgba(20, 20, 20, 0.4);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--space-md);
+    height: 100%;
+}
+
+.kanban-column-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-md);
+    padding-bottom: var(--space-sm);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.kanban-header-left {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    color: var(--text-primary);
+}
+
+.kanban-header-left h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.kanban-header-left svg {
+    color: var(--accent-primary);
+}
+
+.kanban-count {
+    background: var(--bg-hover);
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+}
+
+.kanban-dropzone {
+    flex: 1;
+    min-height: 150px;
+    border-radius: var(--radius-md);
+    transition: background-color 0.2s ease;
+}
+
+.kanban-dropzone.dragging-over {
+    background: rgba(139, 92, 246, 0.05);
+    /* very subtle highlight */
+}
+
+.kanban-draggable {
+    margin-bottom: var(--space-sm);
+    transition: transform 0.1s ease;
+}
+
+.kanban-draggable.is-dragging {
+    transform: scale(1.02);
+    z-index: 100;
+}
+
+/* Board specific tweaks for candidate cards */
+.candidate-card.board-card {
+    padding: var(--space-md);
+    background: var(--bg-card);
+    cursor: grab;
+    margin: 0;
+}
+
+.candidate-card.board-card:active {
+    cursor: grabbing;
+}
+
+.board-card .candidate-info h3 {
+    font-size: 1rem;
+}
+
+.board-card .scores-row {
+    padding: var(--space-sm);
+    gap: var(--space-sm);
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.board-card .card-actions {
+    padding-top: var(--space-sm);
+    flex-wrap: wrap;
+}
+
+.board-card .action-btn {
+    padding: var(--space-xs) var(--space-sm);
+    flex: 1;
+    justify-content: center;
+}

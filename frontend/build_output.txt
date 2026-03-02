@@ -1,0 +1,15 @@
+
+> frontend@0.0.0 build
+> vite build
+
+[36mvite v7.3.1 [32mbuilding client environment for production...[36m[39m
+transforming...
+[32m✓[39m 2048 modules transformed.
+[31m✗[39m Build failed in 2.72s
+[31merror during build:
+[31mCould not resolve "../../services/api" from "src/components/Messages.jsx"[31m
+file: [36mC:/Users/Manish singh/Desktop/Internship(college)/resume-analyzer/frontend/src/components/Messages.jsx[31m
+    at getRollupError (file:///C:/Users/Manish%20singh/Desktop/Internship(college)/resume-analyzer/frontend/node_modules/rollup/dist/es/shared/parseAst.js:402:41)
+    at error (file:///C:/Users/Manish%20singh/Desktop/Internship(college)/resume-analyzer/frontend/node_modules/rollup/dist/es/shared/parseAst.js:398:42)
+    at ModuleLoader.handleInvalidResolvedId (file:///C:/Users/Manish%20singh/Desktop/Internship(college)/resume-analyzer/frontend/node_modules/rollup/dist/es/shared/node-entry.js:21687:24)
+    at file:///C:/Users/Manish%20singh/Desktop/Internship(college)/resume-analyzer/frontend/node_modules/rollup/dist/es/shared/node-entry.js:21647:26[39m

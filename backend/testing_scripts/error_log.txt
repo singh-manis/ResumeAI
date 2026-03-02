@@ -1,0 +1,24 @@
+
+[2026-02-18T18:05:29.252Z] Error in /chat: [GoogleGenerativeAI Error]: First content should be with role 'user', got model
+Stack: Error: [GoogleGenerativeAI Error]: First content should be with role 'user', got model
+    at validateChatHistory (file:///C:/Users/Manish%20singh/Desktop/Internship(college)/resume-analyzer/backend/node_modules/@google/generative-ai/dist/index.mjs:1050:19)
+    at new ChatSession (file:///C:/Users/Manish%20singh/Desktop/Internship(college)/resume-analyzer/backend/node_modules/@google/generative-ai/dist/index.mjs:1147:13)
+    at GenerativeModel.startChat (file:///C:/Users/Manish%20singh/Desktop/Internship(college)/resume-analyzer/backend/node_modules/@google/generative-ai/dist/index.mjs:1399:16)
+    at chatWithCareerBot (file:///C:/Users/Manish%20singh/Desktop/Internship(college)/resume-analyzer/backend/src/services/aiService.js:65:28)
+    at file:///C:/Users/Manish%20singh/Desktop/Internship(college)/resume-analyzer/backend/src/routes/matchRoutes.js:435:30
+    at file:///C:/Users/Manish%20singh/Desktop/Internship(college)/resume-analyzer/backend/src/middleware/errorHandler.js:69:21
+    at Layer.handleRequest (C:\Users\Manish singh\Desktop\Internship(college)\resume-analyzer\backend\node_modules\router\lib\layer.js:152:17)
+    at next (C:\Users\Manish singh\Desktop\Internship(college)\resume-analyzer\backend\node_modules\router\lib\route.js:157:13)
+    at authenticate (file:///C:/Users/Manish%20singh/Desktop/Internship(college)/resume-analyzer/backend/src/middleware/auth.js:46:9)
+
+[2026-02-18T18:05:38.744Z] Error in /chat: [GoogleGenerativeAI Error]: First content should be with role 'user', got model
+Stack: Error: [GoogleGenerativeAI Error]: First content should be with role 'user', got model
+    at validateChatHistory (file:///C:/Users/Manish%20singh/Desktop/Internship(college)/resume-analyzer/backend/node_modules/@google/generative-ai/dist/index.mjs:1050:19)
+    at new ChatSession (file:///C:/Users/Manish%20singh/Desktop/Internship(college)/resume-analyzer/backend/node_modules/@google/generative-ai/dist/index.mjs:1147:13)
+    at GenerativeModel.startChat (file:///C:/Users/Manish%20singh/Desktop/Internship(college)/resume-analyzer/backend/node_modules/@google/generative-ai/dist/index.mjs:1399:16)
+    at chatWithCareerBot (file:///C:/Users/Manish%20singh/Desktop/Internship(college)/resume-analyzer/backend/src/services/aiService.js:65:28)
+    at file:///C:/Users/Manish%20singh/Desktop/Internship(college)/resume-analyzer/backend/src/routes/matchRoutes.js:435:30
+    at file:///C:/Users/Manish%20singh/Desktop/Internship(college)/resume-analyzer/backend/src/middleware/errorHandler.js:69:21
+    at Layer.handleRequest (C:\Users\Manish singh\Desktop\Internship(college)\resume-analyzer\backend\node_modules\router\lib\layer.js:152:17)
+    at next (C:\Users\Manish singh\Desktop\Internship(college)\resume-analyzer\backend\node_modules\router\lib\route.js:157:13)
+    at authenticate (file:///C:/Users/Manish%20singh/Desktop/Internship(college)/resume-analyzer/backend/src/middleware/auth.js:46:9)

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#ec4899"/>
+    </linearGradient>
+  </defs>
+  <!-- Rounded square background -->
+  <rect width="64" height="64" rx="16" fill="url(#g)"/>
+  <!-- Bold letter R as geometric shapes -->
+  <rect x="14" y="12" width="7" height="40" rx="3" fill="white"/>
+  <path d="M21 12 H36 C43 12 48 17 48 24 C48 31 43 36 36 36 H21" stroke="white" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- Diagonal leg of R -->
+  <line x1="34" y1="36" x2="49" y2="52" stroke="white" stroke-width="7" stroke-linecap="round"/>
+</svg>

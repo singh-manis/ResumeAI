@@ -206,57 +206,67 @@ const LandingPage = () => {
                                 </>
                             }
                         </motion.div>
-                        <motion.div className="lp-trust"
-                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.0 }}>
-                            <div className="lp-trust__avs">
-                                {['S', 'M', 'E', 'D', 'J'].map((l, i) => (
-                                    <div key={i} className="lp-trust__av" style={{ '--i': i }}>{l}</div>
-                                ))}
-                            </div>
-                            <span><strong>10,000+</strong> professionals already onboard</span>
-                        </motion.div>
                     </div>
 
-                    {/* Right — 3D image visual */}
+                    {/* Right — Hero visual with circular frame */}
                     <motion.div className="lp-hero__visual"
                         initial={{ opacity: 0, x: 60 }} animate={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.9, delay: 0.5 }}>
-                        <div className="lp-3d-scene">
-                            <div className="lp-3d-glow" />
+
+                        {/* Decorative floating dots */}
+                        <motion.div className="lp-deco-dot lp-deco-dot--1"
+                            animate={{ y: [0, -18, 0], x: [0, 8, 0] }}
+                            transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }} />
+                        <motion.div className="lp-deco-dot lp-deco-dot--2"
+                            animate={{ y: [0, 14, 0], x: [0, -10, 0] }}
+                            transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', delay: 1 }} />
+                        <motion.div className="lp-deco-dot lp-deco-dot--3"
+                            animate={{ y: [0, -10, 0] }}
+                            transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }} />
+
+                        {/* Circular hero image frame */}
+                        <div className="lp-circle-frame">
+                            <div className="lp-circle-glow" />
+                            <div className="lp-circle-ring" />
                             <motion.img
-                                src="https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=1600&auto=format&fit=crop"
-                                alt="Premium AI fluid abstract"
-                                className="lp-3d-img"
-                                animate={{ y: [0, -16, 0] }}
-                                transition={{ duration: 4.5, repeat: Infinity, ease: 'easeInOut' }}
+                                src="/hero-ai.png"
+                                alt="AI-powered resume analysis"
+                                className="lp-circle-img"
+                                animate={{ scale: [1, 1.03, 1] }}
+                                transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
                             />
-                            <div className="lp-3d-overlay">
-                                <div className="lp-3d-stat-card">
-                                    <div className="lp-3d-stat-header">
-                                        <span className="lp-dot lp-dot--green" />
-                                        <span>Resume AI Score</span>
-                                        <strong className="lp-score-badge">85%</strong>
-                                    </div>
-                                    <div className="lp-skill-list">
-                                        {skills.map(s => (
-                                            <div key={s.l} className="lp-skill-row">
-                                                <span>{s.l}</span>
-                                                <div className="lp-skill-bar">
-                                                    <motion.div
-                                                        className="lp-skill-fill"
-                                                        style={{ background: s.c }}
-                                                        initial={{ width: 0 }}
-                                                        animate={{ width: `${s.p}%` }}
-                                                        transition={{ duration: 1.3, delay: 1.2 }}
-                                                    />
-                                                </div>
-                                                <span>{s.p}%</span>
+                        </div>
+
+                        {/* Stat card overlay */}
+                        <motion.div className="lp-stat-overlay"
+                            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 1.2, duration: 0.6 }}>
+                            <div className="lp-3d-stat-card">
+                                <div className="lp-3d-stat-header">
+                                    <span className="lp-dot lp-dot--green" />
+                                    <span>Resume AI Score</span>
+                                    <strong className="lp-score-badge">85%</strong>
+                                </div>
+                                <div className="lp-skill-list">
+                                    {skills.map(s => (
+                                        <div key={s.l} className="lp-skill-row">
+                                            <span>{s.l}</span>
+                                            <div className="lp-skill-bar">
+                                                <motion.div
+                                                    className="lp-skill-fill"
+                                                    style={{ background: s.c }}
+                                                    initial={{ width: 0 }}
+                                                    animate={{ width: `${s.p}%` }}
+                                                    transition={{ duration: 1.3, delay: 1.2 }}
+                                                />
                                             </div>
-                                        ))}
-                                    </div>
+                                            <span>{s.p}%</span>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
-                        </div>
+                        </motion.div>
+
                         {/* Floating badges */}
                         <motion.div className="lp-float lp-float--match"
                             animate={{ y: [0, -12, 0] }} transition={{ duration: 3, repeat: Infinity }}>
@@ -386,10 +396,45 @@ const LandingPage = () => {
                 <div className="lp-container">
                     <motion.div className="lp-cta__box"
                         initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }}>
+
+                        {/* Background effects */}
+                        <div className="lp-cta__grid" />
                         <div className="lp-orb lp-orb--cta-v" /><div className="lp-orb lp-orb--cta-p" />
+
+                        {/* Animated sparkle particles */}
+                        {[...Array(6)].map((_, i) => (
+                            <motion.div key={i} className={`lp-sparkle lp-sparkle--${i + 1}`}
+                                animate={{
+                                    opacity: [0, 1, 0],
+                                    scale: [0.5, 1, 0.5],
+                                    y: [0, -20, 0]
+                                }}
+                                transition={{ duration: 3 + i * 0.5, repeat: Infinity, delay: i * 0.4 }}
+                            />
+                        ))}
+
                         <div className="lp-chip lp-chip--light"><Sparkles size={14} />Start Today — It's Free</div>
                         <h2>Ready to <span className="lp-accent">Supercharge</span> Your Career?</h2>
-                        <p>Join 10,000+ professionals using Rezlo to land jobs faster with AI.</p>
+                        <p>Join 10,000+ professionals using Rezlo to land jobs faster with AI-powered analysis, matching, and coaching.</p>
+
+                        {/* Highlight stats */}
+                        <div className="lp-cta__highlights">
+                            <div className="lp-cta__hl">
+                                <strong>95%</strong>
+                                <span>Match Accuracy</span>
+                            </div>
+                            <div className="lp-cta__hl-divider" />
+                            <div className="lp-cta__hl">
+                                <strong>2x</strong>
+                                <span>Faster Hiring</span>
+                            </div>
+                            <div className="lp-cta__hl-divider" />
+                            <div className="lp-cta__hl">
+                                <strong>10K+</strong>
+                                <span>Users Hired</span>
+                            </div>
+                        </div>
+
                         <div className="lp-cta__actions">
                             {isAuthenticated
                                 ? <Link to={dashLink} className="lp-btn lp-btn--primary lp-btn--xl lp-btn--glow">

@@ -54,7 +54,7 @@ const NotificationBell = () => {
                 return <Target size={16} />;
             case 'JOB_POSTED':
                 return <Briefcase size={16} />;
-            case 'NEW_MESSAGE':
+            case 'MESSAGE':
                 return <MessageSquare size={16} />;
             default:
                 return <Sparkles size={16} />;
@@ -120,7 +120,7 @@ const NotificationBell = () => {
                                         onClick={() => {
                                             markAsRead(notification.id);
                                             setIsOpen(false);
-                                            if (notification.type === 'NEW_MESSAGE') {
+                                            if (notification.type === 'MESSAGE') {
                                                 const basePath = user?.role === 'RECRUITER' ? '/recruiter/messages' : '/candidate/messages';
                                                 navigate(basePath);
                                             }

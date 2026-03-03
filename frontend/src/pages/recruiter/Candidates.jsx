@@ -20,7 +20,8 @@ import {
     X,
     Cpu,
     KanbanSquare,
-    LayoutGrid
+    LayoutGrid,
+    MessageSquare
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../../services/api';
@@ -37,6 +38,7 @@ const PIPELINE_COLUMNS = [
 ];
 
 const Candidates = () => {
+    const navigate = useNavigate();
     const [applications, setApplications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [viewMode, setViewMode] = useState('board'); // 'board' or 'grid'
@@ -209,10 +211,16 @@ const Candidates = () => {
                 <button
                     className="action-btn view"
                     onClick={() => {
-                        if (app.resume?.fileUrl) {
+                        if (app.resume?.id) {
                             const backendUrl = import.meta.env.VITE_API_URL.replace('/api', '');
-                            const fileUrl = app.resume.fileUrl.startsWith('/') ? app.resume.fileUrl : `/${app.resume.fileUrl}`;
-                            window.open(`${backendUrl}${fileUrl}`, '_blank');
+                            window.open(`${backendUrl}/api/resumes/${app.resume.id}/view`, '_blank');
+                        } else if (app.resume?.fileUrl) {
+                            let fileUrl = app.resume.fileUrl;
+                            if (!fileUrl.startsWith('http')) {
+                                const backendUrl = import.meta.env.VITE_API_URL.replace('/api', '');
+                                fileUrl = fileUrl.startsWith('/') ? `${backendUrl}${fileUrl}` : `${backendUrl}/${fileUrl}`;
+                            }
+                            window.open(fileUrl, '_blank');
                         } else {
                             toast.error('Resume file not found');
                         }
@@ -226,13 +234,19 @@ const Candidates = () => {
                     className="action-btn"
                     style={{ background: 'rgba(99, 102, 241, 0.1)', color: 'var(--primary-color)' }}
                     onClick={() => {
-                        navigate('/recruiter/messages', {
-                            state: {
-                                startChat: true,
-                                otherUserId: app.candidate.id,
-                                jobId: app.job.id
-                            }
-                        });
+                        // Assuming the messages feature exists or will be built
+                        // If it doesn't exist yet, we show a toast for now to prevent a broken route
+if (app.candidate && app.job) {
+                            navigate('/recruiter/messages', {
+                                state: {
+                                    startChat: true,
+                                    otherUserId: app.candidate.id,
+                                    jobId: app.job.id
+                                }
+                            });
+                        } else {
+                            toast.error('Cannot message candidate at this time');
+                        }
                     }}
                     title="Message Candidate"
                 >

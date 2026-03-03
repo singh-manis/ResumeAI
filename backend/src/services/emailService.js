@@ -8,54 +8,54 @@ const __dirname = path.dirname(__filename);
 
 // Email configuration
 const createTransporter = () => {
-    // For development, use Ethereal (fake SMTP service)
-    // For production, use real SMTP (Gmail, SendGrid, etc.)
+  // For development, use Ethereal (fake SMTP service)
+  // For production, use real SMTP (Gmail, SendGrid, etc.)
 
-    if (process.env.NODE_ENV === 'production' && process.env.SMTP_HOST) {
-        return nodemailer.createTransport({
-            host: process.env.SMTP_HOST,
-            port: parseInt(process.env.SMTP_PORT) || 587,
-            secure: process.env.SMTP_SECURE === 'true',
-            auth: {
-                user: process.env.SMTP_USER,
-                pass: process.env.SMTP_PASS
-            }
-        });
-    }
-
-    // Development: Use Ethereal email (captured emails can be viewed in browser)
+  if (process.env.NODE_ENV === 'production' && process.env.SMTP_HOST) {
     return nodemailer.createTransport({
-        host: 'smtp.ethereal.email',
-        port: 587,
-        auth: {
-            user: process.env.ETHEREAL_USER || 'demo@ethereal.email',
-            pass: process.env.ETHEREAL_PASS || 'demo_password'
-        }
+      host: process.env.SMTP_HOST,
+      port: parseInt(process.env.SMTP_PORT) || 587,
+      secure: process.env.SMTP_SECURE === 'true',
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS
+      }
     });
+  }
+
+  // Development: Use Ethereal email (captured emails can be viewed in browser)
+  return nodemailer.createTransport({
+    host: 'smtp.ethereal.email',
+    port: 587,
+    auth: {
+      user: process.env.ETHEREAL_USER || 'demo@ethereal.email',
+      pass: process.env.ETHEREAL_PASS || 'demo_password'
+    }
+  });
 };
 
 // Email template loader
 const loadTemplate = (templateName) => {
-    const templatePath = path.join(__dirname, '..', 'templates', 'emails', `${templateName}.html`);
+  const templatePath = path.join(__dirname, '..', 'templates', 'emails', `${templateName}.html`);
 
-    if (fs.existsSync(templatePath)) {
-        return fs.readFileSync(templatePath, 'utf-8');
-    }
+  if (fs.existsSync(templatePath)) {
+    return fs.readFileSync(templatePath, 'utf-8');
+  }
 
-    // Fallback to simple text template
-    return null;
+  // Fallback to simple text template
+  return null;
 };
 
 // Replace template variables
 const renderTemplate = (template, variables) => {
-    let html = template;
+  let html = template;
 
-    Object.keys(variables).forEach(key => {
-        const regex = new RegExp(`{{${key}}}`, 'g');
-        html = html.replace(regex, variables[key]);
-    });
+  Object.keys(variables).forEach(key => {
+    const regex = new RegExp(`{{${key}}}`, 'g');
+    html = html.replace(regex, variables[key]);
+  });
 
-    return html;
+  return html;
 };
 
 // Base email styling
@@ -156,59 +156,62 @@ const baseStyles = `
 
 // Email service class
 class EmailService {
-    constructor() {
-        this.transporter = null;
-        this.fromEmail = process.env.FROM_EMAIL || 'noreply@resumeanalyzer.ai';
-        this.fromName = process.env.FROM_NAME || 'Resume Analyzer';
+  constructor() {
+    this.transporter = null;
+    this.fromEmail = process.env.FROM_EMAIL || 'noreply@resumeanalyzer.ai';
+    this.fromName = process.env.FROM_NAME || 'Resume Analyzer';
+  }
+
+  async init() {
+    try {
+      this.transporter = createTransporter();
+
+      // Verify connection in development
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('📧 Email service initialized (Development mode)');
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Email service initialization failed:', error);
+      return false;
     }
+  }
 
-    async init() {
-        try {
-            this.transporter = createTransporter();
+  async sendEmail({ to, subject, html, text }) {
+    try {
+      if (!this.transporter) {
+        await this.init();
+      }
 
-            // Verify connection in development
-            if (process.env.NODE_ENV !== 'production') {
-                console.log('📧 Email service initialized (Development mode)');
-            }
+      const mailOptions = {
+        from: `"${this.fromName}" <${this.fromEmail}>`,
+        to,
+        subject,
+        html,
+        text: text || html.replace(/<[^>]*>/g, ''), // Strip HTML for text version
+        ...(arguments[0].icalEvent && {
+          icalEvent: arguments[0].icalEvent
+        })
+      };
 
-            return true;
-        } catch (error) {
-            console.error('Email service initialization failed:', error);
-            return false;
-        }
+      const info = await this.transporter.sendMail(mailOptions);
+
+      // In development, log the Ethereal preview URL
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('📧 Email sent:', nodemailer.getTestMessageUrl(info));
+      }
+
+      return { success: true, messageId: info.messageId };
+    } catch (error) {
+      console.error('Error sending email:', error);
+      return { success: false, error: error.message };
     }
+  }
 
-    async sendEmail({ to, subject, html, text }) {
-        try {
-            if (!this.transporter) {
-                await this.init();
-            }
-
-            const mailOptions = {
-                from: `"${this.fromName}" <${this.fromEmail}>`,
-                to,
-                subject,
-                html,
-                text: text || html.replace(/<[^>]*>/g, '') // Strip HTML for text version
-            };
-
-            const info = await this.transporter.sendMail(mailOptions);
-
-            // In development, log the Ethereal preview URL
-            if (process.env.NODE_ENV !== 'production') {
-                console.log('📧 Email sent:', nodemailer.getTestMessageUrl(info));
-            }
-
-            return { success: true, messageId: info.messageId };
-        } catch (error) {
-            console.error('Error sending email:', error);
-            return { success: false, error: error.message };
-        }
-    }
-
-    // Welcome email for new users
-    async sendWelcomeEmail(user) {
-        const html = `
+  // Welcome email for new users
+  async sendWelcomeEmail(user) {
+    const html = `
       <!DOCTYPE html>
       <html>
       <head>${baseStyles}</head>
@@ -246,36 +249,36 @@ class EmailService {
       </html>
     `;
 
-        return this.sendEmail({
-            to: user.email,
-            subject: `Welcome to Resume Analyzer, ${user.firstName}! 🎉`,
-            html
-        });
-    }
+    return this.sendEmail({
+      to: user.email,
+      subject: `Welcome to Resume Analyzer, ${user.firstName}! 🎉`,
+      html
+    });
+  }
 
-    // Application status update email
-    async sendApplicationStatusEmail(application, user, job) {
-        const statusMessages = {
-            PENDING: 'Your application has been received',
-            REVIEWED: 'Your application is being reviewed',
-            SHORTLISTED: 'Congratulations! You\'ve been shortlisted',
-            INTERVIEW: 'Great news! You\'ve been selected for an interview',
-            OFFERED: 'Amazing! You\'ve received a job offer',
-            REJECTED: 'Update on your application',
-            WITHDRAWN: 'Your application has been withdrawn'
-        };
+  // Application status update email
+  async sendApplicationStatusEmail(application, user, job) {
+    const statusMessages = {
+      PENDING: 'Your application has been received',
+      REVIEWED: 'Your application is being reviewed',
+      SHORTLISTED: 'Congratulations! You\'ve been shortlisted',
+      INTERVIEW: 'Great news! You\'ve been selected for an interview',
+      OFFERED: 'Amazing! You\'ve received a job offer',
+      REJECTED: 'Update on your application',
+      WITHDRAWN: 'Your application has been withdrawn'
+    };
 
-        const statusColors = {
-            PENDING: 'pending',
-            REVIEWED: 'reviewed',
-            SHORTLISTED: 'shortlisted',
-            INTERVIEW: 'interview',
-            OFFERED: 'offered',
-            REJECTED: 'rejected',
-            WITHDRAWN: 'rejected'
-        };
+    const statusColors = {
+      PENDING: 'pending',
+      REVIEWED: 'reviewed',
+      SHORTLISTED: 'shortlisted',
+      INTERVIEW: 'interview',
+      OFFERED: 'offered',
+      REJECTED: 'rejected',
+      WITHDRAWN: 'rejected'
+    };
 
-        const html = `
+    const html = `
       <!DOCTYPE html>
       <html>
       <head>${baseStyles}</head>
@@ -324,36 +327,36 @@ class EmailService {
       </html>
     `;
 
-        return this.sendEmail({
-            to: user.email,
-            subject: `${statusMessages[application.status]} - ${job.title} at ${job.company}`,
-            html
-        });
-    }
+    return this.sendEmail({
+      to: user.email,
+      subject: `${statusMessages[application.status]} - ${job.title} at ${job.company}`,
+      html
+    });
+  }
 
-    // Interview scheduled email
-    async sendInterviewScheduledEmail(interview, candidate, job, recruiter) {
-        const interviewDate = new Date(interview.scheduledAt);
-        const formattedDate = interviewDate.toLocaleDateString('en-US', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
-        const formattedTime = interviewDate.toLocaleTimeString('en-US', {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
+  // Interview scheduled email
+  async sendInterviewScheduledEmail(interview, candidate, job, recruiter) {
+    const interviewDate = new Date(interview.scheduledAt);
+    const formattedDate = interviewDate.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+    const formattedTime = interviewDate.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
 
-        const typeLabels = {
-            PHONE: '📞 Phone Interview',
-            VIDEO: '📹 Video Interview',
-            ONSITE: '🏢 Onsite Interview',
-            TECHNICAL: '💻 Technical Interview',
-            HR: '👥 HR Interview'
-        };
+    const typeLabels = {
+      PHONE: '📞 Phone Interview',
+      VIDEO: '📹 Video Interview',
+      ONSITE: '🏢 Onsite Interview',
+      TECHNICAL: '💻 Technical Interview',
+      HR: '👥 HR Interview'
+    };
 
-        const html = `
+    const html = `
       <!DOCTYPE html>
       <html>
       <head>${baseStyles}</head>
@@ -371,8 +374,8 @@ class EmailService {
               <p><strong>📅 Date:</strong> ${formattedDate}</p>
               <p><strong>⏰ Time:</strong> ${formattedTime}</p>
               <p><strong>⏱️ Duration:</strong> ${interview.duration} minutes</p>
-              ${interview.location ? `<p><strong>📍 Location:</strong> ${interview.location}</p>` : ''}
-              ${interview.meetingLink ? `<p><strong>🔗 Meeting Link:</strong> <a href="${interview.meetingLink}" style="color: #6366f1;">${interview.meetingLink}</a></p>` : ''}
+              ${interview.location && interview.type !== 'VIDEO' ? `<p><strong>📍 Location:</strong> ${interview.location}</p>` : ''}
+              ${interview.type === 'VIDEO' && interview.meetingLink ? `<p><strong>🔗 Meeting Link:</strong> <a href="${interview.meetingLink}" style="color: #6366f1;">${interview.meetingLink}</a></p>` : ''}
             </div>
             
             <div class="info-box">
@@ -411,28 +414,76 @@ class EmailService {
       </html>
     `;
 
-        return this.sendEmail({
-            to: candidate.email,
-            subject: `📅 Interview Scheduled: ${job.title} at ${job.company}`,
-            html
-        });
-    }
+    // Generate ICS Calendar event
+    const endTime = new Date(interviewDate.getTime() + interview.duration * 60000);
+    const icalEvent = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Resume Analyzer//EN
+BEGIN:VEVENT
+UID:${interview.id}@resumeanalyzer.ai
+DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z
+DTSTART:${interviewDate.toISOString().replace(/[-:]/g, '').split('.')[0]}Z
+DTEND:${endTime.toISOString().replace(/[-:]/g, '').split('.')[0]}Z
+SUMMARY:Interview: ${job.title} at ${job.company}
+ORGANIZER;CN="${recruiter.firstName} ${recruiter.lastName}":mailto:${recruiter.email}
+ATTENDEE;CN="${candidate.firstName} ${candidate.lastName}";RSVP=TRUE:mailto:${candidate.email}
+DESCRIPTION:Interview for ${job.title} position.\\n${interview.notes || ''}\\nMeeting Link: ${interview.meetingLink || 'N/A'}
+LOCATION:${interview.type === 'VIDEO' ? interview.meetingLink : (interview.location || 'N/A')}
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR`;
 
-    // Interview reminder email (send 24 hours before)
-    async sendInterviewReminderEmail(interview, candidate, job) {
-        const interviewDate = new Date(interview.scheduledAt);
-        const formattedDate = interviewDate.toLocaleDateString('en-US', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
-        const formattedTime = interviewDate.toLocaleTimeString('en-US', {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
+    // Send to Candidate
+    const candidateResult = await this.sendEmail({
+      to: candidate.email,
+      subject: `📅 Interview Scheduled: ${job.title} at ${job.company}`,
+      html: html.replace('Great news,', `Great news, ${candidate.firstName}!`),
+      icalEvent: {
+        filename: 'interview.ics',
+        method: 'request',
+        content: icalEvent
+      }
+    });
 
-        const html = `
+    // Send to Recruiter (slightly modified text ideally, but reusing for simplicity)
+    const recruiterHtml = html.replace(
+      `<p>Great news, ${candidate.firstName}! Your interview for the ${job.title} position at ${job.company} has been scheduled.</p>`,
+      `<p>Hi ${recruiter.firstName}, this is a confirmation that you have scheduled an interview with ${candidate.firstName} ${candidate.lastName} for the ${job.title} role.</p>`
+    );
+
+    const recruiterResult = await this.sendEmail({
+      to: recruiter.email,
+      subject: `📅 Interview Scheduled with ${candidate.firstName} ${candidate.lastName} for ${job.title}`,
+      html: recruiterHtml,
+      icalEvent: {
+        filename: 'interview.ics',
+        method: 'request',
+        content: icalEvent
+      }
+    });
+
+    return {
+      candidateResult,
+      recruiterResult,
+      success: candidateResult.success && recruiterResult.success
+    };
+  }
+
+  // Interview reminder email (send 24 hours before)
+  async sendInterviewReminderEmail(interview, candidate, job) {
+    const interviewDate = new Date(interview.scheduledAt);
+    const formattedDate = interviewDate.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+    const formattedTime = interviewDate.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    const html = `
       <!DOCTYPE html>
       <html>
       <head>${baseStyles}</head>
@@ -470,16 +521,16 @@ class EmailService {
       </html>
     `;
 
-        return this.sendEmail({
-            to: candidate.email,
-            subject: `⏰ Reminder: Interview Tomorrow - ${job.title} at ${job.company}`,
-            html
-        });
-    }
+    return this.sendEmail({
+      to: candidate.email,
+      subject: `⏰ Reminder: Interview Tomorrow - ${job.title} at ${job.company}`,
+      html
+    });
+  }
 
-    // New job match notification
-    async sendNewMatchEmail(user, matches) {
-        const matchesHtml = matches.slice(0, 5).map(match => `
+  // New job match notification
+  async sendNewMatchEmail(user, matches) {
+    const matchesHtml = matches.slice(0, 5).map(match => `
       <div class="info-box" style="margin-bottom: 12px;">
         <h3>${match.job.title}</h3>
         <p><strong>${match.job.company}</strong> • ${match.job.location || 'Remote'}</p>
@@ -487,7 +538,7 @@ class EmailService {
       </div>
     `).join('');
 
-        const html = `
+    const html = `
       <!DOCTYPE html>
       <html>
       <head>${baseStyles}</head>
@@ -519,18 +570,18 @@ class EmailService {
       </html>
     `;
 
-        return this.sendEmail({
-            to: user.email,
-            subject: `🎯 ${matches.length} New Job Match${matches.length > 1 ? 'es' : ''} Found!`,
-            html
-        });
-    }
+    return this.sendEmail({
+      to: user.email,
+      subject: `🎯 ${matches.length} New Job Match${matches.length > 1 ? 'es' : ''} Found!`,
+      html
+    });
+  }
 
-    // Password reset email
-    async sendPasswordResetEmail(user, resetToken) {
-        const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+  // Password reset email
+  async sendPasswordResetEmail(user, resetToken) {
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
 
-        const html = `
+    const html = `
       <!DOCTYPE html>
       <html>
       <head>${baseStyles}</head>
@@ -566,12 +617,12 @@ class EmailService {
       </html>
     `;
 
-        return this.sendEmail({
-            to: user.email,
-            subject: '🔐 Reset Your Password - Resume Analyzer',
-            html
-        });
-    }
+    return this.sendEmail({
+      to: user.email,
+      subject: '🔐 Reset Your Password - Resume Analyzer',
+      html
+    });
+  }
 }
 
 // Export singleton instance

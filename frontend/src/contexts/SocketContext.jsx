@@ -9,7 +9,7 @@ export const useSocket = () => {
 };
 
 export const SocketProvider = ({ children }) => {
-    const { user, token } = useAuth();
+    const { user, accessToken: token } = useAuth();
     const [socket, setSocket] = useState(null);
     const [isConnected, setIsConnected] = useState(false);
 
@@ -37,6 +37,7 @@ export const SocketProvider = ({ children }) => {
 
         newSocket.on('connect', () => {
             console.log('Socket connected:', newSocket.id);
+            newSocket.emit('identify', user.id);
             setIsConnected(true);
         });
 

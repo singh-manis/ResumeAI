@@ -1,5 +1,6 @@
 import { prisma } from '../index.js';
 import { AppError } from '../middleware/errorHandler.js';
+import { createNotification } from '../routes/notificationRoutes.js';
 
 // Get all conversations for the current user
 export const getConversations = async (req, res) => {
@@ -175,7 +176,7 @@ export const startConversation = async (req, res) => {
 
     } catch (error) {
         console.error('Error starting conversation:', error);
-        throw new AppError('Failed to initialize conversation', 500);
+        throw new AppError('Failed to initialize conversation: ' + error.message, 500);
     }
 };
 
@@ -215,6 +216,18 @@ export const sendMessage = async (req, res) => {
             where: { id: conversationId },
             data: { updatedAt: new Date() }
         });
+
+        const recipientId = conversation.candidateId === senderId ? conversation.recruiterId : conversation.candidateId;
+        const senderUser = await prisma.user.findUnique({ where: { id: senderId } });
+        const senderName = senderUser ? `${senderUser.firstName} ${senderUser.lastName}` : 'Someone';
+
+        await createNotification(
+            recipientId,
+            'MESSAGE',
+            `New Message from ${senderName}`,
+            content.length > 50 ? content.substring(0, 50) + '...' : content,
+            { conversationId, messageId: message.id }
+        );
 
         res.status(201).json({
             status: 'success',

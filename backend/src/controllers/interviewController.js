@@ -2,6 +2,7 @@ import { startInterviewSession, chatInInterview } from '../services/aiService.js
 import { addXP } from './gamificationController.js';
 import { prisma } from '../index.js';
 import { AppError } from '../middleware/errorHandler.js';
+import emailService from '../services/emailService.js';
 
 export const startInterview = async (req, res) => {
     try {
@@ -140,18 +141,34 @@ export const scheduleInterview = async (req, res) => {
             application: {
                 include: {
                     candidate: { select: { id: true, firstName: true, lastName: true, email: true, avatar: true } },
-                    job: { select: { id: true, title: true, company: true } }
+                    job: {
+                        include: {
+                            recruiter: { select: { id: true, firstName: true, lastName: true, email: true } }
+                        }
+                    }
                 }
             }
         }
     });
+
+    // Send email to both candidate and recruiter with ICS invitation
+    try {
+        await emailService.sendInterviewScheduledEmail(
+            interview,
+            interview.application.candidate,
+            interview.application.job,
+            interview.application.job.recruiter
+        );
+    } catch (emailError) {
+        console.error('Failed to send interview scheduled emails:', emailError);
+    }
 
     res.status(201).json({ message: 'Interview scheduled', interview });
 };
 
 export const updateInterview = async (req, res) => {
     const { id } = req.params;
-    const { status, scheduledAt, location, meetingLink, notes, feedback, rating } = req.body;
+    const { status, scheduledAt, location, meetingLink, notes, feedback, rating, technicalRating, culturalFitRating, communicationRating } = req.body;
 
     // Verify interview exists
     const existing = await prisma.interview.findUnique({
@@ -189,6 +206,9 @@ export const updateInterview = async (req, res) => {
         if (notes !== undefined) updateData.notes = notes;
         if (feedback !== undefined) updateData.feedback = feedback;
         if (rating !== undefined) updateData.rating = rating;
+        if (technicalRating !== undefined) updateData.technicalRating = technicalRating;
+        if (culturalFitRating !== undefined) updateData.culturalFitRating = culturalFitRating;
+        if (communicationRating !== undefined) updateData.communicationRating = communicationRating;
     }
 
     const interview = await prisma.interview.update({

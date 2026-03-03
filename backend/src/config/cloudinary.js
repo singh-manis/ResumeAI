@@ -17,13 +17,18 @@ cloudinary.config({
  * @param {string} resourceType - 'image', 'raw', or 'auto' (default: 'auto').
  * @returns {Promise<Object>} The Cloudinary upload response.
  */
-export const uploadToCloudinary = (buffer, folder, resourceType = 'auto') => {
+export const uploadToCloudinary = (buffer, folder, resourceType = 'auto', format = undefined) => {
     return new Promise((resolve, reject) => {
+        const options = {
+            folder: folder,
+            resource_type: resourceType
+        };
+        if (format) {
+            options.format = format;
+        }
+
         const uploadStream = cloudinary.uploader.upload_stream(
-            {
-                folder: folder,
-                resource_type: resourceType
-            },
+            options,
             (error, result) => {
                 if (error) {
                     console.error('Cloudinary Upload Error:', error);

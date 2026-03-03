@@ -482,10 +482,50 @@
     color: var(--text-primary);
 }
 
-.schedule-form {
+.schedule-form,
+.feedback-form {
     display: flex;
     flex-direction: column;
     gap: var(--space-lg);
+}
+
+.star-rating-input {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: var(--space-sm);
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+}
+
+.star-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    color: var(--border-color);
+    transition: all var(--transition-fast);
+}
+
+.star-btn:hover,
+.star-btn.active {
+    color: #fbbf24;
+}
+
+.star-btn svg {
+    display: block;
+}
+
+.star-btn svg.filled {
+    fill: #fbbf24;
+}
+
+.rating-value {
+    margin-left: auto;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
 }
 
 .form-group-row {

@@ -97,8 +97,13 @@ const Messages = () => {
     }, [socket, activeConversation]);
 
     const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        messagesEndRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' });
     };
+
+    // Auto-scroll to bottom whenever messages update
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
 
     const loadConversations = async () => {
         try {

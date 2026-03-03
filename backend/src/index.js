@@ -20,7 +20,7 @@ import jobRoutes from './routes/jobRoutes.js';
 import matchRoutes from './routes/matchRoutes.js';
 import analyticsRoutes from './routes/analyticsRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
-import notificationRoutes from './routes/notificationRoutes.js';
+import notificationRoutes, { createNotification } from './routes/notificationRoutes.js';
 import savedJobRoutes from './routes/savedJobRoutes.js';
 import interviewRoutes from './routes/interviewRoutes.js';
 import emailRoutes from './routes/emailRoutes.js';
@@ -51,13 +51,14 @@ const allowedOrigins = [
 ].filter(Boolean);
 
 // Initialize Socket.io
-const io = new Server(httpServer, {
+export const io = new Server(httpServer, {
   cors: {
     origin: allowedOrigins,
     methods: ["GET", "POST"],
     credentials: true
   }
 });
+global.io = io;
 
 // Trust proxy for rate limiting behind reverse proxies
 app.set('trust proxy', 1);
@@ -160,6 +161,12 @@ const startServer = async () => {
     io.on('connection', (socket) => {
       console.log(`📡 Socket connected: ${socket.id}`);
 
+      // User identifies themselves to receive private notifications
+      socket.on('identify', (userId) => {
+        socket.join(`user_${userId}`);
+        console.log(`👤 Socket ${socket.id} identified as user_${userId}`);
+      });
+
       // User joins a specific conversation room
       socket.on('join_conversation', (conversationId) => {
         socket.join(conversationId);
@@ -187,12 +194,26 @@ const startServer = async () => {
           });
 
           // Update conversation timestamp
-          await prisma.conversation.update({
+          const conversation = await prisma.conversation.update({
             where: { id: conversationId },
             data: { updatedAt: new Date() }
           });
 
+          // Send notification to recipient
+          const recipientId = conversation.candidateId === senderId ? conversation.recruiterId : conversation.candidateId;
+          const senderUser = await prisma.user.findUnique({ where: { id: senderId } });
+          const senderName = senderUser ? `${senderUser.firstName} ${senderUser.lastName}` : 'Someone';
+
+          await createNotification(
+            recipientId,
+            'MESSAGE',
+            `New Message from ${senderName}`,
+            content.length > 50 ? content.substring(0, 50) + '...' : content,
+            { conversationId, messageId: message.id }
+          );
+
           // Broadcast to everyone in the room (including sender to confirm)
+          console.log(`[Socket] Broadcasting new_message to conversation: ${conversationId}`);
           io.to(conversationId).emit('new_message', message);
         } catch (error) {
           console.error("Socket message error:", error);

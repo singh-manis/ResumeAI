@@ -1,5 +1,5 @@
 import express from 'express';
-import { authenticate } from '../middleware/auth.js';
+import { authenticate, optionalAuth } from '../middleware/auth.js';
 import { isCandidate } from '../middleware/rbac.js';
 import { uploadResume } from '../middleware/upload.js';
 import { asyncHandler, AppError } from '../middleware/errorHandler.js';
@@ -30,7 +30,7 @@ router.post('/upload',
             // Parse the resume text directly from buffer
             const rawText = await parseResume(fileBuffer, fileName);
 
-            // Upload to Cloudinary
+            // Upload to Cloudinary (using 'raw' to avoid PDF delivery restrictions on free accounts)
             const cloudinaryResult = await uploadToCloudinary(fileBuffer, 'resumes', 'raw');
 
             // Create resume record
@@ -177,6 +177,38 @@ router.get('/:id/analysis', authenticate, asyncHandler(async (req, res) => {
 }));
 
 /**
+ * @route   GET /api/resumes/:id/view
+ * @desc    View resume PDF inline (bypasses Cloudinary PDF restriction)
+ */
+router.get('/:id/view', optionalAuth, asyncHandler(async (req, res) => {
+    const resume = await prisma.resume.findFirst({
+        where: { id: req.params.id }
+    });
+
+    if (!resume) {
+        throw new AppError('Resume not found', 404);
+    }
+
+    try {
+        const response = await fetch(resume.fileUrl);
+        if (!response.ok) {
+            throw new Error(`Cloudinary returned ${response.status} ${response.statusText}`);
+        }
+
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+
+        res.setHeader('Content-Type', 'application/pdf');
+        // 'inline' tells the browser to display it rather than download
+        res.setHeader('Content-Disposition', `inline; filename="${resume.originalFileName}"`);
+        res.send(buffer);
+    } catch (error) {
+        console.error('Error proxying resume:', error);
+        throw new AppError('Failed to load resume PDF', 500);
+    }
+}));
+
+/**
  * @route   DELETE /api/resumes/:id
  * @desc    Delete a resume
  */
@@ -190,12 +222,6 @@ router.delete('/:id', authenticate, isCandidate, asyncHandler(async (req, res) =
 
     if (!resume) {
         throw new AppError('Resume not found', 404);
-    }
-
-    // Delete file
-    const filePath = path.join(process.cwd(), resume.fileUrl);
-    if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
     }
 
     // Delete from database

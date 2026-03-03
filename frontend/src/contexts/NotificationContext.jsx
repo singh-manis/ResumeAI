@@ -154,28 +154,14 @@ export const NotificationProvider = ({ children }) => {
     useEffect(() => {
         if (!socket) return;
 
-        const handleNewMessage = (message) => {
-            // We only want to show a notification if the message is NOT from us
-            // (The senderId check is handled by the fact that we receive 'new_message' broadcasts, 
-            // but we can just blindly add a notification for now, or check if we are the sender.)
-            const currentUserStr = localStorage.getItem('user');
-            if (currentUserStr) {
-                const currentUser = JSON.parse(currentUserStr);
-                if (message.senderId === currentUser.id) return; // Don't notify for our own messages
-            }
-
-            addNotification({
-                id: `msg_${message.id || Date.now()}`,
-                type: 'NEW_MESSAGE',
-                title: 'New Message',
-                message: message.content.length > 30 ? message.content.substring(0, 30) + '...' : message.content,
-                read: false,
-                createdAt: message.createdAt || new Date().toISOString()
-            });
+        const handleNewNotification = (notification) => {
+            // Check if we are the sender of a message to avoid self-notifications
+            // But the backend already handles self-notification prevention since it looks up the recipientId
+            addNotification(notification);
         };
 
-        socket.on('new_message', handleNewMessage);
-        return () => socket.off('new_message', handleNewMessage);
+        socket.on('new_notification', handleNewNotification);
+        return () => socket.off('new_notification', handleNewNotification);
     }, [socket]);
 
     return (

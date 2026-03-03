@@ -22,7 +22,8 @@ import {
     Activity,
     BrainCircuit,
     MessageSquare,
-    Video
+    Video,
+    Trash2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { resumeAPI, matchAPI, analyticsAPI, gamificationAPI } from '../../services/api';
@@ -241,6 +242,17 @@ const ResumesPage = () => {
         }
     };
 
+    const handleDeleteResume = async (id) => {
+        if (!window.confirm('Are you sure you want to delete this resume?')) return;
+        try {
+            await resumeAPI.delete(id);
+            setResumes(prev => prev.filter(r => r.id !== id));
+            toast.success('Resume deleted successfully');
+        } catch (error) {
+            toast.error(error.response?.data?.error || 'Failed to delete resume');
+        }
+    };
+
     return (
         <div className="dashboard-content">
             <div className="dashboard-header">
@@ -280,9 +292,17 @@ const ResumesPage = () => {
                                 </div>
                             </div>
                             <div className="resume-actions">
-                                <Link to={`/candidate/resumes/${resume.id}`} className="btn btn-secondary btn-sm">
+                                <Link to={`/candidate/resumes/${resume.id}`} className="btn btn-secondary btn-sm" style={{ flex: 1, textAlign: 'center' }}>
                                     View Analysis
                                 </Link>
+                                <button
+                                    className="btn btn-sm"
+                                    style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--error)' }}
+                                    onClick={() => handleDeleteResume(resume.id)}
+                                    title="Delete Resume"
+                                >
+                                    <Trash2 size={16} />
+                                </button>
                             </div>
                         </div>
                     ))}

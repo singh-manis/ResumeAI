@@ -41,6 +41,15 @@ const Interviews = () => {
         notes: ''
     });
 
+    const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+    const [feedbackData, setFeedbackData] = useState({
+        interviewId: '',
+        technicalRating: 0,
+        culturalFitRating: 0,
+        communicationRating: 0,
+        notes: ''
+    });
+
     useEffect(() => {
         fetchInterviews();
     }, [filter]);
@@ -118,6 +127,18 @@ const Interviews = () => {
     };
 
     const handleUpdateStatus = async (id, status) => {
+        if (status === 'COMPLETED') {
+            setFeedbackData({
+                interviewId: id,
+                technicalRating: 0,
+                culturalFitRating: 0,
+                communicationRating: 0,
+                notes: ''
+            });
+            setShowFeedbackModal(true);
+            return;
+        }
+
         try {
             await api.patch(`/interviews/${id}`, { status });
             setInterviews(prev => prev.map(i =>
@@ -127,6 +148,60 @@ const Interviews = () => {
         } catch (error) {
             toast.error('Failed to update interview');
         }
+    };
+
+    const handleFeedbackSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            // Calculate overall rating
+            const overallRating = Math.round(
+                (feedbackData.technicalRating + feedbackData.culturalFitRating + feedbackData.communicationRating) / 3
+            );
+
+            await api.patch(`/interviews/${feedbackData.interviewId}`, {
+                status: 'COMPLETED',
+                technicalRating: feedbackData.technicalRating,
+                culturalFitRating: feedbackData.culturalFitRating,
+                communicationRating: feedbackData.communicationRating,
+                rating: overallRating,
+                feedback: feedbackData.notes
+            });
+
+            setInterviews(prev => prev.map(i =>
+                i.id === feedbackData.interviewId ? {
+                    ...i,
+                    status: 'COMPLETED',
+                    technicalRating: feedbackData.technicalRating,
+                    culturalFitRating: feedbackData.culturalFitRating,
+                    communicationRating: feedbackData.communicationRating,
+                    rating: overallRating,
+                    feedback: feedbackData.notes
+                } : i
+            ));
+
+            toast.success('Interview completed and feedback saved');
+            setShowFeedbackModal(false);
+        } catch (error) {
+            toast.error('Failed to save feedback');
+        }
+    };
+
+    const RatingStars = ({ rating, setRating }) => {
+        return (
+            <div className="star-rating-input">
+                {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                        key={star}
+                        type="button"
+                        className={`star-btn ${star <= rating ? 'active' : ''}`}
+                        onClick={() => setRating(star)}
+                    >
+                        <Star size={20} className={star <= rating ? 'filled' : ''} />
+                    </button>
+                ))}
+                <span className="rating-value">{rating > 0 ? `${rating}/5` : 'Required'}</span>
+            </div>
+        );
     };
 
     const handleDelete = async (id) => {
@@ -485,6 +560,79 @@ const Interviews = () => {
                                     </button>
                                     <button type="submit" className="btn btn-primary">
                                         Schedule
+                                    </button>
+                                </div>
+                            </form>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+            {/* Feedback Modal */}
+            <AnimatePresence>
+                {showFeedbackModal && (
+                    <motion.div
+                        className="modal-overlay"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setShowFeedbackModal(false)}
+                    >
+                        <motion.div
+                            className="modal-content"
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.95, opacity: 0 }}
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <div className="modal-header">
+                                <h2>Complete Interview & Feedback</h2>
+                                <button className="close-btn" onClick={() => setShowFeedbackModal(false)}>
+                                    <X size={20} />
+                                </button>
+                            </div>
+                            <form onSubmit={handleFeedbackSubmit} className="feedback-form">
+                                <div className="form-group">
+                                    <label>Technical Skills</label>
+                                    <RatingStars
+                                        rating={feedbackData.technicalRating}
+                                        setRating={(r) => setFeedbackData({ ...feedbackData, technicalRating: r })}
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Cultural Fit</label>
+                                    <RatingStars
+                                        rating={feedbackData.culturalFitRating}
+                                        setRating={(r) => setFeedbackData({ ...feedbackData, culturalFitRating: r })}
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Communication</label>
+                                    <RatingStars
+                                        rating={feedbackData.communicationRating}
+                                        setRating={(r) => setFeedbackData({ ...feedbackData, communicationRating: r })}
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Internal Notes</label>
+                                    <textarea
+                                        rows="4"
+                                        placeholder="Add detailed feedback and recommendations..."
+                                        value={feedbackData.notes}
+                                        onChange={e => setFeedbackData({ ...feedbackData, notes: e.target.value })}
+                                        className="form-control"
+                                        required
+                                    ></textarea>
+                                </div>
+                                <div className="modal-actions">
+                                    <button type="button" className="btn btn-secondary" onClick={() => setShowFeedbackModal(false)}>
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="btn btn-primary"
+                                        disabled={!feedbackData.technicalRating || !feedbackData.culturalFitRating || !feedbackData.communicationRating}
+                                    >
+                                        Save & Complete
                                     </button>
                                 </div>
                             </form>

@@ -4,6 +4,8 @@ import { isRecruiter, isRecruiterOrAdmin } from '../middleware/rbac.js';
 import { asyncHandler, AppError } from '../middleware/errorHandler.js';
 import { prisma } from '../index.js';
 import { evaluateResumeMatch } from '../services/aiService.js';
+import emailService from '../services/emailService.js';
+import { createNotification } from './notificationRoutes.js';
 
 const router = express.Router();
 
@@ -228,7 +230,7 @@ router.get('/my-applications', authenticate, asyncHandler(async (req, res) => {
     const applications = await prisma.application.findMany({
         where: { candidateId: req.user.id },
         include: {
-            job: { select: { id: true, title: true, company: true, companyLogo: true, location: true, workType: true } },
+            job: { select: { id: true, title: true, company: true, companyLogo: true, location: true, workType: true, recruiterId: true } },
             interviews: true
         },
         orderBy: { appliedAt: 'desc' }
@@ -247,7 +249,10 @@ router.patch('/applications/:id', authenticate, isRecruiter, asyncHandler(async 
     // Verify it belongs to one of recruiter's jobs
     const application = await prisma.application.findUnique({
         where: { id: req.params.id },
-        include: { job: true }
+        include: {
+            job: true,
+            candidate: true
+        }
     });
 
     if (!application || application.job.recruiterId !== req.user.id) {
@@ -258,6 +263,25 @@ router.patch('/applications/:id', authenticate, isRecruiter, asyncHandler(async 
         where: { id: req.params.id },
         data: { status }
     });
+
+    // Send email notification about status change
+    try {
+        if (status !== 'PENDING' && status !== application.status) {
+            await emailService.sendApplicationStatusEmail(updatedApplication, application.candidate, application.job);
+
+            // Send in-app notification
+            await createNotification(
+                application.candidate.id,
+                'APPLICATION',
+                'Application Status Updated',
+                `Your application for ${application.job.title} at ${application.job.company} is now ${status}.`,
+                { applicationId: updatedApplication.id, jobId: application.job.id, status }
+            );
+        }
+    } catch (emailError) {
+        console.error('Failed to send status update email/notification:', emailError);
+        // Don't throw error to allow application status to be updated even if email fails
+    }
 
     res.json({ message: 'Application updated', application: updatedApplication });
 }));
@@ -346,6 +370,15 @@ router.post('/:id/apply', authenticate, asyncHandler(async (req, res) => {
             matchAnalysis: analysis
         }
     });
+
+    // Notify recruiter
+    await createNotification(
+        jobToApply.recruiterId,
+        'APPLICATION',
+        'New Job Application',
+        `A candidate has applied for your job: ${jobToApply.title}.`,
+        { applicationId: application.id, jobId: jobToApply.id, candidateId: req.user.id }
+    );
 
     // Increment application count on job
     await prisma.job.update({

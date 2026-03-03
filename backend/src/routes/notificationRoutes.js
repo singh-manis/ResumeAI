@@ -140,6 +140,22 @@ export const createNotification = async (userId, type, title, message, metadata 
                 metadata
             }
         });
+        // Setup real-time socket mechanism dynamically
+        const ioInstance = global.io;
+        if (ioInstance) {
+            console.log(`[Socket] Emitting new_notification to room: user_${userId}`);
+            ioInstance.to(`user_${userId}`).emit('new_notification', {
+                id: notification.id,
+                type: notification.type,
+                title: notification.title,
+                message: notification.message,
+                metadata: notification.metadata,
+                read: notification.isRead,
+                createdAt: notification.createdAt
+            });
+        }
+
+
         return notification;
     } catch (error) {
         console.error('Error creating notification:', error);

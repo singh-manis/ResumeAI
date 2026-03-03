@@ -2,6 +2,7 @@
 
 **An intelligent full-stack platform that leverages Google Gemini AI to analyze resumes, match candidates with jobs, and accelerate the hiring process.**
 
+[![Live Demo](https://img.shields.io/badge/Live_Demo-Visit_Site-brightgreen?style=for-the-badge)](https://resumeai-frontend-d80p.onrender.com)
 ![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)
 ![Node.js](https://img.shields.io/badge/Node.js-20.x-339933?style=for-the-badge&logo=node.js&logoColor=white)
 ![React](https://img.shields.io/badge/React-19.x-61DAFB?style=for-the-badge&logo=react&logoColor=black)

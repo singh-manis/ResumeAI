@@ -8,9 +8,7 @@ const __dirname = path.dirname(__filename);
 
 // Email configuration
 const createTransporter = () => {
-  // For development, use Ethereal (fake SMTP service)
   // For production, use real SMTP (Gmail, SendGrid, etc.)
-
   if (process.env.NODE_ENV === 'production' && process.env.SMTP_HOST) {
     return nodemailer.createTransport({
       host: process.env.SMTP_HOST,
@@ -21,6 +19,12 @@ const createTransporter = () => {
         pass: process.env.SMTP_PASS
       }
     });
+  }
+
+  // Production without SMTP: skip emails entirely
+  if (process.env.NODE_ENV === 'production') {
+    console.warn('⚠️ SMTP not configured in production. Emails will be skipped.');
+    return null;
   }
 
   // Development: Use Ethereal email (captured emails can be viewed in browser)
@@ -182,6 +186,12 @@ class EmailService {
     try {
       if (!this.transporter) {
         await this.init();
+      }
+
+      // Skip email if transporter is not available (e.g. SMTP not configured in production)
+      if (!this.transporter) {
+        console.log(`📧 Email skipped (no SMTP configured): "${subject}" to ${to}`);
+        return { success: true, skipped: true, messageId: null };
       }
 
       const mailOptions = {

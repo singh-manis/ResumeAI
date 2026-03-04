@@ -91,13 +91,14 @@
 /* Grid */
 .matches-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: var(--space-lg);
 }
 
-/* Match Card */
+/* Match Card — vertical layout */
 .match-card {
     display: flex;
+    flex-direction: column;
     background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
@@ -112,27 +113,27 @@
 }
 
 .match-card.loading {
-    height: 220px;
+    height: 280px;
     background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-hover) 50%, var(--bg-card) 75%);
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
 }
 
-/* Score Badge */
+/* Score Badge — now sits at the top of each card */
 .match-score-badge {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    padding: var(--space-lg);
+    gap: var(--space-md);
+    padding: var(--space-md) var(--space-lg);
     background: var(--bg-hover);
-    min-width: 100px;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .score-circle {
     position: relative;
-    width: 60px;
-    height: 60px;
+    width: 68px;
+    height: 68px;
+    flex-shrink: 0;
 }
 
 .score-circle svg {
@@ -153,7 +154,7 @@
 }
 
 .score-circle.poor {
-    color: var(--error);
+    color: #ef4444;
 }
 
 .score-value {
@@ -162,7 +163,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     font-weight: 700;
     color: var(--text-primary);
 }
@@ -170,9 +171,12 @@
 .match-label {
     font-size: 0.6875rem;
     color: var(--text-muted);
-    margin-top: var(--space-xs);
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    margin-left: auto;
+    padding: 4px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-full);
 }
 
 /* Match Content */
@@ -181,29 +185,33 @@
     padding: var(--space-lg);
     display: flex;
     flex-direction: column;
+    gap: var(--space-sm);
 }
 
 .match-content .job-title {
-    font-size: 1rem;
-    margin-bottom: var(--space-xs);
+    font-size: 1.0625rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--text-primary);
 }
 
 .match-content .company-name {
     color: var(--text-secondary);
     font-size: 0.9375rem;
-    margin-bottom: var(--space-md);
+    margin: 0;
 }
 
 .match-meta {
     display: flex;
-    gap: var(--space-md);
-    margin-bottom: var(--space-md);
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    margin-top: var(--space-xs);
 }
 
 .match-meta span {
     display: flex;
     align-items: center;
-    gap: var(--space-xs);
+    gap: 4px;
     font-size: 0.8125rem;
     color: var(--text-muted);
 }
@@ -213,12 +221,12 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-sm);
-    margin-bottom: var(--space-md);
+    margin-top: var(--space-sm);
 }
 
 .breakdown-item {
     display: grid;
-    grid-template-columns: 70px 1fr 40px;
+    grid-template-columns: 70px 1fr 44px;
     align-items: center;
     gap: var(--space-sm);
     font-size: 0.75rem;
@@ -249,7 +257,7 @@
 
 /* Skill Gaps */
 .skill-gaps {
-    margin-top: auto;
+    margin-top: var(--space-sm);
 }
 
 .gaps-label {
@@ -267,23 +275,39 @@
 
 .gap-tag {
     padding: 2px 8px;
-    background: var(--warning-light);
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.3);
     border-radius: var(--radius-sm);
     font-size: 0.6875rem;
     color: var(--warning);
 }
 
-/* Match Actions */
+/* Match Actions — full-width row at the bottom */
 .match-actions {
     display: flex;
-    align-items: flex-end;
-    padding: var(--space-lg);
-    padding-left: 0;
+    gap: var(--space-sm);
+    padding: var(--space-md) var(--space-lg);
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-hover);
+}
+
+.match-actions .btn {
+    flex: 1;
+    justify-content: center;
+    font-size: 0.8125rem;
+}
+
+.view-details-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
 }
 
 .view-job-btn {
+    flex: 1;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: var(--space-xs);
     padding: var(--space-sm) var(--space-md);
     background: var(--accent-gradient);
@@ -293,6 +317,7 @@
     font-weight: 500;
     text-decoration: none;
     transition: all var(--transition-fast);
+    white-space: nowrap;
 }
 
 .view-job-btn:hover {
@@ -363,27 +388,8 @@
     .matches-grid {
         grid-template-columns: 1fr;
     }
-
-    .match-card {
-        flex-direction: column;
-    }
-
-    .match-score-badge {
-        flex-direction: row;
-        justify-content: flex-start;
-        gap: var(--space-md);
-        padding: var(--space-md);
-    }
-
-    .match-actions {
-        padding: 0 var(--space-lg) var(--space-lg);
-    }
-
-    .view-job-btn {
-        width: 100%;
-        justify-content: center;
-    }
 }
+
 
 /* ==========================================
    AI Match Detail Modal

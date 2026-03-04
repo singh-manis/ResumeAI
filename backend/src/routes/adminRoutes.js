@@ -133,6 +133,27 @@ router.put('/users/:id', asyncHandler(async (req, res) => {
 }));
 
 /**
+ * @route   PATCH /api/admin/users/:id
+ * @desc    Partially update user status (e.g. isActive)
+ */
+router.patch('/users/:id', asyncHandler(async (req, res) => {
+    const { isActive } = req.body;
+
+    const user = await prisma.user.update({
+        where: { id: req.params.id },
+        data: {
+            ...(isActive !== undefined && { isActive })
+        },
+        select: {
+            id: true,
+            isActive: true
+        }
+    });
+
+    res.json({ message: 'User status updated', user });
+}));
+
+/**
  * @route   PUT /api/admin/users/:id/reset-password
  * @desc    Reset user password
  */

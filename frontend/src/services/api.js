@@ -157,6 +157,28 @@ export const quizAPI = {
 export const interviewPracticeAPI = {
     start: (data) => api.post('/interviews/start', data),
     chat: (data) => api.post('/interviews/chat', data),
+    streamStart: async (data) => {
+        const token = localStorage.getItem('accessToken');
+        return fetch(`${API_URL}/interviews/stream-start`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token && { Authorization: `Bearer ${token}` })
+            },
+            body: JSON.stringify(data)
+        });
+    },
+    streamChat: async (data) => {
+        const token = localStorage.getItem('accessToken');
+        return fetch(`${API_URL}/interviews/stream-chat`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token && { Authorization: `Bearer ${token}` })
+            },
+            body: JSON.stringify(data)
+        });
+    }
 };
 
 export const messageAPI = {

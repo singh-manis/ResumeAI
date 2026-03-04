@@ -5,6 +5,8 @@ import { asyncHandler } from '../middleware/errorHandler.js';
 import {
     startInterview,
     processInterviewChat,
+    streamStartInterview,
+    streamProcessInterviewChat,
     getInterviews,
     scheduleInterview,
     updateInterview,
@@ -16,6 +18,10 @@ const router = express.Router();
 // AI Interview Routes (Existing)
 router.post('/start', authenticate, startInterview);
 router.post('/chat', authenticate, processInterviewChat);
+
+// AI Interview Routes (Streaming)
+router.post('/stream-start', authenticate, streamStartInterview);
+router.post('/stream-chat', authenticate, streamProcessInterviewChat);
 
 // Human Interview Routes
 router.get('/', authenticate, asyncHandler(getInterviews));

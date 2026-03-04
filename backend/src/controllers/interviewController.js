@@ -1,4 +1,4 @@
-import { startInterviewSession, chatInInterview } from '../services/aiService.js';
+import { startInterviewSession, chatInInterview, streamStartInterviewSession, streamChatInInterview, getMockInterviewResponse } from '../services/aiService.js';
 import { addXP } from './gamificationController.js';
 import { prisma } from '../index.js';
 import { AppError } from '../middleware/errorHandler.js';
@@ -44,6 +44,78 @@ export const processInterviewChat = async (req, res) => {
     } catch (error) {
         console.error('Interview Chat Error:', error);
         res.status(500).json({ message: 'Failed to process chat' });
+    }
+};
+
+// --- Streaming AI Interview Endpoints ---
+
+export const streamStartInterview = async (req, res) => {
+    try {
+        const { role, techStack, experience } = req.body;
+
+        if (!role || !techStack || !experience) {
+            return res.status(400).json({ message: 'Role, tech stack, and experience are required' });
+        }
+
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+
+        try {
+            const stream = await streamStartInterviewSession(role, techStack, experience);
+            for await (const chunk of stream.stream) {
+                const chunkText = chunk.text();
+                res.write(`data: ${JSON.stringify({ text: chunkText })}\n\n`);
+            }
+        } catch (streamErr) {
+            console.error('Stream Start Fallback triggered:', streamErr.message);
+            const fallbackText = getMockInterviewResponse(role, techStack, 'start');
+            res.write(`data: ${JSON.stringify({ text: fallbackText })}\n\n`);
+        }
+        res.write('data: [DONE]\n\n');
+        res.end();
+
+        if (req.user) {
+            try { await addXP(req.user.id, 20); } catch (error) { console.error(error); }
+        }
+    } catch (error) {
+        console.error('Stream Start Error Details:', error);
+        if (!res.headersSent) res.status(500).json({ message: 'Failed to stream start interview', error: error.message });
+        else res.end();
+    }
+};
+
+export const streamProcessInterviewChat = async (req, res) => {
+    try {
+        const { message, history, context } = req.body;
+        const { role, techStack, experience } = context || {};
+
+        if (!message) {
+            return res.status(400).json({ message: 'Message is required' });
+        }
+
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+
+        try {
+            const stream = await streamChatInInterview(message, history || [], role, techStack, experience);
+            for await (const chunk of stream.stream) {
+                const chunkText = chunk.text();
+                res.write(`data: ${JSON.stringify({ text: chunkText })}\n\n`);
+            }
+        } catch (streamErr) {
+            console.error('Stream Chat Fallback triggered:', streamErr.message);
+            const fallbackText = getMockInterviewResponse(role, techStack, 'chat');
+            res.write(`data: ${JSON.stringify({ text: fallbackText })}\n\n`);
+        }
+
+        res.write('data: [DONE]\n\n');
+        res.end();
+    } catch (error) {
+        console.error('Stream Chat Error Details:', error);
+        if (!res.headersSent) res.status(500).json({ message: 'Failed to process stream chat', error: error.message });
+        else res.end();
     }
 };
 

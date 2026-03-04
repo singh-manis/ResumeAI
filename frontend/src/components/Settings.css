@@ -150,7 +150,7 @@
 }
 
 .password-input input {
-    padding-right: 44px;
+    padding-right: 44px !important;
 }
 
 .toggle-password {

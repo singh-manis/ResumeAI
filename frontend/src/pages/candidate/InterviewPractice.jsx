@@ -75,17 +75,37 @@ const InterviewPractice = () => {
         }
     }, []);
 
-    const speak = (text) => {
+    const speak = (text, cancel = true) => {
         if (isMuted || !synth) return;
 
-        // Cancel previous speech
-        synth.cancel();
+        // Cancel previous speech if requested
+        if (cancel) synth.cancel();
 
         const utterance = new SpeechSynthesisUtterance(text);
-        utterance.rate = 1;
-        utterance.pitch = 1;
+
+        // Try to find a better sounding English voice (e.g. Google or Microsoft natural voices)
+        const voices = synth.getVoices();
+        const preferredVoices = voices.filter(v => v.lang.startsWith('en') &&
+            (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Premium')));
+
+        if (preferredVoices.length > 0) {
+            // Pick a professional sounding one (often UK or US female voices sound best)
+            const bestVoice = preferredVoices.find(v => v.name.includes('Female') || v.name.includes('UK')) || preferredVoices[0];
+            utterance.voice = bestVoice;
+        } else {
+            // Fallback to any English voice
+            const engVoices = voices.filter(v => v.lang.startsWith('en'));
+            if (engVoices.length > 0) utterance.voice = engVoices[0];
+        }
+
+        utterance.rate = 1.05; // Slightly faster for a more natural cadence
+        utterance.pitch = 1.05; // Slightly higher pitch
         utterance.volume = 1;
-        synth.speak(utterance);
+
+        // Small delay to ensure voices are loaded (Chrome bug workaround)
+        setTimeout(() => {
+            synth.speak(utterance);
+        }, 50);
     };
 
     const toggleRecording = () => {
@@ -102,6 +122,54 @@ const InterviewPractice = () => {
         }
     };
 
+    const processStream = async (res) => {
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let fullText = '';
+        let sentenceBuffer = '';
+        let isSpeakingStarted = false;
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split('\n');
+
+            for (const line of lines) {
+                if (line.startsWith('data: ') && !line.includes('[DONE]')) {
+                    try {
+                        const data = JSON.parse(line.slice(6));
+                        if (data.text) {
+                            fullText += data.text;
+                            sentenceBuffer += data.text;
+
+                            setMessages(prev => {
+                                const newMsgs = [...prev];
+                                // Update the last message (which should be the assistant's empty placeholder)
+                                newMsgs[newMsgs.length - 1].content = fullText;
+                                return newMsgs;
+                            });
+
+                            // Speak in chunks to avoid waiting for the full generation
+                            if (/[.!?]\s/.test(sentenceBuffer) || sentenceBuffer.endsWith('\n')) {
+                                speak(sentenceBuffer.trim(), !isSpeakingStarted);
+                                isSpeakingStarted = true;
+                                sentenceBuffer = '';
+                            }
+                        }
+                    } catch (e) {
+                        console.error('SSE Parse Error:', e, line);
+                    }
+                }
+            }
+        }
+        // Speak remaining buffer
+        if (sentenceBuffer.trim()) {
+            speak(sentenceBuffer.trim(), !isSpeakingStarted);
+        }
+    };
+
     const handleStartInterview = async () => {
         if (!config.role || !config.techStack || !config.experience) {
             toast.error("Please fill in all fields");
@@ -110,18 +178,17 @@ const InterviewPractice = () => {
 
         setLoading(true);
         try {
-            const res = await interviewPracticeAPI.start(config);
-            setMessages([
-                {
-                    role: 'assistant',
-                    content: res.data.message
-                }
-            ]);
             setStep('interview');
-            speak(res.data.message);
+            // Show typing indicator immediately while stream connects
+            setMessages([{ role: 'assistant', content: '' }]);
+
+            const res = await interviewPracticeAPI.streamStart(config);
+            if (!res.ok) throw new Error("Stream start failed");
+            await processStream(res);
         } catch (error) {
             console.error("Start interview error:", error);
             toast.error("Failed to start interview");
+            setStep('setup');
         } finally {
             setLoading(false);
         }
@@ -132,29 +199,30 @@ const InterviewPractice = () => {
 
         synth.cancel(); // Stop speaking if user interrupts
         const userMessage = { role: 'user', content: message.trim() };
-        setMessages(prev => [...prev, userMessage]);
+
+        // Add user message, and an empty assistant message to hold the incoming stream
+        setMessages(prev => [...prev, userMessage, { role: 'assistant', content: '' }]);
         setInput('');
         setLoading(true);
+        scrollToBottom();
 
         try {
-            const res = await interviewPracticeAPI.chat({
+            const res = await interviewPracticeAPI.streamChat({
                 message: message.trim(),
                 history: messages,
                 context: config
             });
-
-            const assistantMessage = {
-                role: 'assistant',
-                content: res.data.response
-            };
-            setMessages(prev => [...prev, assistantMessage]);
-            speak(res.data.response);
+            if (!res.ok) throw new Error("Stream chat failed");
+            await processStream(res);
         } catch (error) {
             console.error("Interview chat error:", error);
             toast.error("Failed to send message");
+            // Remove the empty assistant message placeholder on error
+            setMessages(prev => prev.slice(0, -1));
         } finally {
             setLoading(false);
             inputRef.current?.focus();
+            scrollToBottom();
         }
     };
 

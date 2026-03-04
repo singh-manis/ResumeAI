@@ -6,14 +6,12 @@ dotenv.config();
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const MODELS = [
-    "models/gemini-2.5-flash",
     "models/gemini-2.0-flash",
     "models/gemini-1.5-flash",
-    "models/gemini-1.5-pro",
-    "models/gemini-1.0-pro"
+    "models/gemini-2.5-flash",
 ];
 
-// Helper for cascade generation
+// Helper for cascade generation (optimized for Render's 30s timeout)
 const generateWithCascade = async (userPrompt, systemInstruction = null, jsonMode = false) => {
     let lastError = null;
 
@@ -43,10 +41,10 @@ const generateWithCascade = async (userPrompt, systemInstruction = null, jsonMod
 
                     if (attemptError.message.includes('429')) {
                         const retryMatch = attemptError.message.match(/retryDelay":"(\d+)(?:\.\d+)?s"/);
-                        const waitTime = retryMatch ? (parseInt(retryMatch[1]) + 1) * 1000 : 5000;
+                        const waitTime = retryMatch ? (parseInt(retryMatch[1]) + 1) * 1000 : 3000;
 
-                        // Smart Skip: If wait is too long (> 6s), skip to next model immediately
-                        if (waitTime > 6000 && attempts < maxAttempts) {
+                        // Smart Skip: If wait is too long (> 4s), skip to next model immediately
+                        if (waitTime > 4000) {
                             console.warn(`Wait time ${waitTime}ms too long for ${modelName}. Skipping model.`);
                             break;
                         }
@@ -57,7 +55,7 @@ const generateWithCascade = async (userPrompt, systemInstruction = null, jsonMod
                         }
                     } else {
                         // Network error, short wait
-                        if (attempts < maxAttempts) await new Promise(resolve => setTimeout(resolve, 2000));
+                        if (attempts < maxAttempts) await new Promise(resolve => setTimeout(resolve, 1000));
                     }
                 }
             }
@@ -237,7 +235,7 @@ const MOCK_INTERVIEW_QUESTIONS = {
     ]
 };
 
-const getMockInterviewResponse = (role, techStack, context = "start") => {
+export const getMockInterviewResponse = (role, techStack, context = "start") => {
     // Determine category based on role or stack
     let category = "General";
     const lowerRole = role.toLowerCase();
@@ -271,6 +269,64 @@ export const startInterviewSession = async (role, techStack, experience) => {
     }
 };
 
+// Helper for stream cascade generation
+const generateStreamWithCascade = async (userPrompt) => {
+    let lastError = null;
+    for (const modelName of MODELS) {
+        console.log(`DEBUG Stream: Trying model ${modelName}...`);
+        try {
+            const model = genAI.getGenerativeModel({ model: modelName });
+
+            let attempts = 0;
+            const maxAttempts = 2;
+
+            while (attempts < maxAttempts) {
+                try {
+                    return await model.generateContentStream(userPrompt);
+                } catch (attemptError) {
+                    console.warn(`Stream attempt ${attempts + 1} with ${modelName} failed:`, attemptError.message);
+                    lastError = attemptError;
+                    attempts++;
+
+                    if (attemptError.message.includes('404')) break; // Invalid model, skip
+
+                    if (attemptError.message.includes('429')) {
+                        const retryMatch = attemptError.message.match(/retryDelay":"(\d+)(?:\.\d+)?s"/);
+                        const waitTime = retryMatch ? (parseInt(retryMatch[1]) + 1) * 1000 : 3000;
+
+                        // Smart Skip: If wait is too long (> 4s), skip to next model immediately
+                        if (waitTime > 4000) {
+                            console.warn(`Wait time ${waitTime}ms too long for ${modelName}. Skipping model.`);
+                            break;
+                        }
+
+                        if (attempts < maxAttempts) {
+                            await new Promise(resolve => setTimeout(resolve, waitTime));
+                            continue;
+                        }
+                    } else {
+                        // Network error, short wait
+                        if (attempts < maxAttempts) await new Promise(resolve => setTimeout(resolve, 1000));
+                    }
+                }
+            }
+        } catch (setupError) {
+            console.error(`Failed to setup stream model ${modelName}:`, setupError);
+        }
+    }
+    throw lastError || new Error("All AI models failed for streaming.");
+};
+
+export const streamStartInterviewSession = async (role, techStack, experience) => {
+    try {
+        const prompt = `You are an expert technical interviewer for a ${role} position (Stack: ${techStack}, Exp: ${experience}). Start by introducing yourself briefly and asking the first technical question.`;
+        return await generateStreamWithCascade(prompt);
+    } catch (error) {
+        console.error('Stream Start Interview Error:', error.message);
+        throw error;
+    }
+};
+
 export const chatInInterview = async (message, history, role, techStack, experience) => {
     try {
         const historyText = history.map(h => `${h.role === 'user' ? 'Candidate' : 'Interviewer'}: ${h.content}`).join('\n');
@@ -293,6 +349,30 @@ export const chatInInterview = async (message, history, role, techStack, experie
         return getMockInterviewResponse(role, techStack, "chat");
     }
 };
+
+export const streamChatInInterview = async (message, history, role, techStack, experience) => {
+    try {
+        const historyText = history.map(h => `${h.role === 'user' ? 'Candidate' : 'Interviewer'}: ${h.content}`).join('\n');
+        const prompt = `
+        You are an expert technical interviewer for a ${role} position (Stack: ${techStack}, Exp: ${experience}).
+        
+        Interview History:
+        ${historyText}
+        
+        Candidate's latest answer: "${message}"
+        
+        Your Goal:
+        1. Evaluate the answer.
+        2. Ask the NEXT technical question.
+        3. Be professional but conversational.
+        `;
+        return await generateStreamWithCascade(prompt);
+    } catch (error) {
+        console.error('Stream Interview Chat Error:', error.message);
+        throw error;
+    }
+};
+
 
 export const evaluateResumeMatch = async (resumeText, jobDescription, jobRequirements) => {
     try {

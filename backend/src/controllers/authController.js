@@ -47,9 +47,9 @@ export const register = asyncHandler(async (req, res) => {
     }
 
     // Validate role
-    const validRoles = ['CANDIDATE', 'RECRUITER'];
+    const validRoles = ['CANDIDATE', 'RECRUITER', 'ADMIN'];
     if (!validRoles.includes(role)) {
-        throw new AppError('Invalid role. Must be CANDIDATE or RECRUITER', 400);
+        throw new AppError('Invalid role. Must be CANDIDATE, RECRUITER, or ADMIN', 400);
     }
 
     // Check if user exists

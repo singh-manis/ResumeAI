@@ -110,7 +110,7 @@
 
 .table-header {
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr 100px;
+    grid-template-columns: 2fr 1fr 1fr 1fr 120px;
     gap: var(--space-md);
     padding: var(--space-md) var(--space-lg);
     background: var(--bg-secondary);
@@ -124,7 +124,7 @@
 
 .table-row {
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr 100px;
+    grid-template-columns: 2fr 1fr 1fr 1fr 120px;
     gap: var(--space-md);
     padding: var(--space-md) var(--space-lg);
     border-bottom: 1px solid var(--border-color);

@@ -28,40 +28,55 @@ function cosineSimilarity(a, b) {
 }
 
 /**
- * Calculate skill-based match score
+ * Extract skills from any source (relational join or parsedData)
  */
-function calculateSkillMatch(resumeSkills, jobSkills) {
-    if (!resumeSkills || !jobSkills || jobSkills.length === 0) return 0;
+function extractSkillNames(relationalSkills, parsedData) {
+    // Try relational skills table first
+    if (relationalSkills && relationalSkills.length > 0) {
+        return relationalSkills.map(s => (s.skill?.name || s).toLowerCase().trim());
+    }
+    // Fall back to parsedData.skills
+    if (parsedData?.skills && Array.isArray(parsedData.skills)) {
+        return parsedData.skills.map(s => (typeof s === 'string' ? s : s.name || '').toLowerCase().trim()).filter(Boolean);
+    }
+    return [];
+}
 
-    const resumeSkillNames = resumeSkills.map(s =>
-        (s.skill?.name || s).toLowerCase()
-    );
+/**
+ * Calculate keyword-based match score between resume and job
+ */
+function calculateKeywordMatch(resumeSkillNames, job, jobRelationalSkills) {
+    // Build the full text corpus for the job
+    const jobText = [
+        job.title,
+        job.description,
+        job.requirements,
+        ...(jobRelationalSkills.map(s => s.skill?.name || s))
+    ].filter(Boolean).join(' ').toLowerCase();
 
-    const jobSkillNames = jobSkills.map(s =>
-        (s.skill?.name || s).toLowerCase()
-    );
+    if (resumeSkillNames.length === 0) return { score: 0, matched: [], gaps: [] };
 
     let matchCount = 0;
-    let requiredMatches = 0;
-    let requiredTotal = 0;
+    const matched = [];
+    const notMatched = [];
 
-    for (const jobSkill of jobSkills) {
-        const skillName = (jobSkill.skill?.name || jobSkill).toLowerCase();
-        const isRequired = jobSkill.isRequired !== false;
-
-        if (isRequired) requiredTotal++;
-
-        if (resumeSkillNames.includes(skillName)) {
+    for (const skill of resumeSkillNames) {
+        if (skill && jobText.includes(skill)) {
             matchCount++;
-            if (isRequired) requiredMatches++;
+            matched.push(skill);
+        } else if (skill) {
+            notMatched.push(skill);
         }
     }
 
-    // Weight required skills more heavily
-    const requiredScore = requiredTotal > 0 ? (requiredMatches / requiredTotal) * 60 : 30;
-    const totalScore = (matchCount / jobSkills.length) * 40;
+    // Base score on percentage of resume's skills found in job
+    const matchRatio = resumeSkillNames.length > 0 ? matchCount / resumeSkillNames.length : 0;
 
-    return Math.round(requiredScore + totalScore);
+    // Score: 40-90 range based on match ratio (always non-zero if resume has content)
+    const baseScore = resumeSkillNames.length > 0 ? 20 : 0;
+    const matchScore = Math.round(baseScore + matchRatio * 70);
+
+    return { score: Math.min(matchScore, 95), matched, notMatched };
 }
 
 /**
@@ -86,6 +101,9 @@ router.post('/resume/:resumeId', authenticate, isCandidate, asyncHandler(async (
         throw new AppError('Resume not found', 404);
     }
 
+    // Extract resume skills from relational table OR parsedData
+    const resumeSkillNames = extractSkillNames(resume.skills, resume.parsedData);
+
     // Get all active jobs
     const jobs = await prisma.job.findMany({
         where: { isActive: true },
@@ -100,11 +118,23 @@ router.post('/resume/:resumeId', authenticate, isCandidate, asyncHandler(async (
     const matches = [];
 
     for (const job of jobs) {
-        // Calculate skill match
-        const skillMatchScore = calculateSkillMatch(
-            resume.skills,
+        // Keyword-based match using parsedData skills
+        const { score: skillMatchScore, matched: strongMatches, notMatched } = calculateKeywordMatch(
+            resumeSkillNames,
+            job,
             job.skills
         );
+
+        // Build skill gaps from job's relational skills that weren't matched
+        const skillGaps = job.skills
+            .filter(js => !resumeSkillNames.includes((js.skill?.name || '').toLowerCase()))
+            .map(js => ({
+                skill: js.skill?.name,
+                isRequired: js.isRequired,
+                importance: js.importanceLevel
+            }));
+
+        // Also add unmatched resume skills as "skills you have but job didn't mention" — skip for now
 
         // Calculate text similarity if embeddings exist
         let semanticScore = 0;
@@ -115,25 +145,10 @@ router.post('/resume/:resumeId', authenticate, isCandidate, asyncHandler(async (
             ) * 100);
         }
 
-        // Combined score (60% skill match, 40% semantic)
-        const overallScore = Math.round(
-            skillMatchScore * 0.6 + semanticScore * 0.4
-        );
-
-        // Identify skill gaps
-        const resumeSkillNames = resume.skills.map(s => s.skill.name.toLowerCase());
-        const skillGaps = job.skills
-            .filter(js => !resumeSkillNames.includes(js.skill.name.toLowerCase()))
-            .map(js => ({
-                skill: js.skill.name,
-                isRequired: js.isRequired,
-                importance: js.importanceLevel
-            }));
-
-        // Strong matches
-        const strongMatches = job.skills
-            .filter(js => resumeSkillNames.includes(js.skill.name.toLowerCase()))
-            .map(js => js.skill.name);
+        // Combined score: 70% keyword match, 30% semantic
+        const overallScore = semanticScore > 0
+            ? Math.round(skillMatchScore * 0.7 + semanticScore * 0.3)
+            : skillMatchScore;
 
         // Create or update match record
         const match = await prisma.match.upsert({
@@ -160,20 +175,23 @@ router.post('/resume/:resumeId', authenticate, isCandidate, asyncHandler(async (
         });
 
         matches.push({
-            matchId: match.id,
+            id: match.id,
+            jobId: job.id,
             job: {
                 id: job.id,
                 title: job.title,
                 company: job.company,
                 location: job.location,
+                salaryMin: job.salaryMin,
+                salaryMax: job.salaryMax,
                 workType: job.workType,
                 employmentType: job.employmentType
             },
             overallScore,
             skillMatchScore,
             semanticScore,
-            skillGaps: skillGaps.length,
-            strongMatches: strongMatches.length
+            skillGaps,
+            strongMatches
         });
     }
 

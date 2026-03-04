@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { motion } from 'framer-motion';
-import { Mail, Lock, User, Eye, EyeOff, UserPlus, Sparkles, Briefcase, Users } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, UserPlus, Sparkles, Briefcase, Users, Shield } from 'lucide-react';
 import toast from 'react-hot-toast';
 import './Auth.css';
 
@@ -62,6 +62,9 @@ const Register = () => {
                     break;
                 case 'RECRUITER':
                     navigate('/recruiter');
+                    break;
+                case 'ADMIN':
+                    navigate('/admin');
                     break;
                 default:
                     navigate('/');
@@ -146,6 +149,14 @@ const Register = () => {
                                 >
                                     <Briefcase size={20} />
                                     <span>Recruiter</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    className={`role-btn ${formData.role === 'ADMIN' ? 'active' : ''}`}
+                                    onClick={() => setFormData(prev => ({ ...prev, role: 'ADMIN' }))}
+                                >
+                                    <Shield size={20} />
+                                    <span>Admin</span>
                                 </button>
                             </div>
                         </div>

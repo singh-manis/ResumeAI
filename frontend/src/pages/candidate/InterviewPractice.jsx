@@ -356,10 +356,9 @@ const InterviewPractice = () => {
                                         <div className="avatar">
                                             {msg.role === 'assistant' ? <Bot size={20} /> : <User size={20} />}
                                         </div>
-                                        <div className="content">
+                                        <div className="content markdown-content">
                                             {msg.role === 'assistant' ? (
                                                 <ReactMarkdown
-                                                    className="markdown-content"
                                                     remarkPlugins={[remarkGfm]}
                                                 >
                                                     {msg.content}

@@ -95,8 +95,8 @@ const Chat = () => {
         }
     };
 
-    const handleSuggestionClick = (question) => {
-        handleSend(question);
+    const handleSuggestionClick = (text) => {
+        handleSend(text);
     };
 
     const handleKeyPress = (e) => {
@@ -154,9 +154,8 @@ const Chat = () => {
                                     )}
                                 </div>
                                 <div className="message-content">
-                                    <div className="message-text">
+                                    <div className="message-text markdown-content">
                                         <ReactMarkdown
-                                            className="markdown-content"
                                             remarkPlugins={[remarkGfm]}
                                         >
                                             {message.content}

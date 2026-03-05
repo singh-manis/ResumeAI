@@ -267,3 +267,60 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* ── Light Theme Overrides ────────────────── */
+[data-theme="light"] .settings-container {
+    background: #ffffff;
+    border-color: #e2e8f0;
+}
+
+[data-theme="light"] .settings-sidebar {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+}
+
+[data-theme="light"] .settings-tab:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+[data-theme="light"] .settings-tab.active {
+    background: rgba(99, 102, 241, 0.08);
+    color: #4f46e5;
+}
+
+[data-theme="light"] .form-group input,
+[data-theme="light"] .form-group textarea {
+    background: #ffffff;
+    border-color: #cbd5e1;
+    color: #0f172a;
+}
+
+[data-theme="light"] .form-group input:focus,
+[data-theme="light"] .form-group textarea:focus {
+    border-color: #6366f1;
+    background: #f8fafc;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+}
+
+[data-theme="light"] .form-group input::placeholder,
+[data-theme="light"] .form-group textarea::placeholder {
+    color: #94a3b8;
+}
+
+[data-theme="light"] .toggle-item {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
+
+[data-theme="light"] .toggle-info strong {
+    color: #0f172a;
+}
+
+[data-theme="light"] .toggle-info span {
+    color: #475569;
+}
+
+[data-theme="light"] .form-actions {
+    border-color: #e2e8f0;
+}

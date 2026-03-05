@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import {
     Send,
     Bot,
@@ -153,9 +155,12 @@ const Chat = () => {
                                 </div>
                                 <div className="message-content">
                                     <div className="message-text">
-                                        {message.content.split('\n').map((line, i) => (
-                                            <p key={i}>{line}</p>
-                                        ))}
+                                        <ReactMarkdown
+                                            className="markdown-content"
+                                            remarkPlugins={[remarkGfm]}
+                                        >
+                                            {message.content}
+                                        </ReactMarkdown>
                                     </div>
                                 </div>
                             </motion.div>

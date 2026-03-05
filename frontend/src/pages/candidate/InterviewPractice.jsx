@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import {
     MessageSquare,
     User,
@@ -355,9 +357,18 @@ const InterviewPractice = () => {
                                             {msg.role === 'assistant' ? <Bot size={20} /> : <User size={20} />}
                                         </div>
                                         <div className="content">
-                                            {msg.content.split('\n').map((line, i) => (
-                                                <p key={i}>{line}</p>
-                                            ))}
+                                            {msg.role === 'assistant' ? (
+                                                <ReactMarkdown
+                                                    className="markdown-content"
+                                                    remarkPlugins={[remarkGfm]}
+                                                >
+                                                    {msg.content}
+                                                </ReactMarkdown>
+                                            ) : (
+                                                msg.content.split('\n').map((line, i) => (
+                                                    <p key={i}>{line}</p>
+                                                ))
+                                            )}
                                         </div>
                                     </motion.div>
                                 ))}

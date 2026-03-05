@@ -1566,3 +1566,11 @@ html {
         grid-template-columns: 1fr;
     }
 }
+
+/* ── Prevent Landing Page Text Corruptions In Light Mode ── */
+[data-theme="light"] .lp-root h1,
+[data-theme="light"] .lp-root h2,
+[data-theme="light"] .lp-root h3,
+[data-theme="light"] .lp-root p {
+    color: var(--lp-text);
+}
